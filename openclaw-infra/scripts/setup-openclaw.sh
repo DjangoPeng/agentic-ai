@@ -11,6 +11,14 @@
 #   - Ubuntu 24.04 LTS（推荐火山引擎 2C4G ¥99/年）
 #   - 已通过 SSH 连接到服务器
 #   - 准备好大模型 API Key（OpenAI / DeepSeek / 豆包等均可）
+#
+# 部署架构（6 步）：
+#   Step 1  购买并初始化云服务器（脚本自动完成系统更新）
+#   Step 2  安装 Node.js 与 OpenClaw
+#   Step 3  配置 API Key 并启动 Gateway
+#   Step 4  安装 Tailscale
+#   Step 5  配置 Tailscale Serve 与 Dashboard 访问（手动）
+#   Step 6  开启 Tailscale SSH 并关闭公网 SSH（可选）
 # ============================================================
 
 set -e
@@ -21,56 +29,87 @@ echo "  课程：AI 业务流架构师 · 第二节课"
 echo "=========================================="
 echo ""
 
-# ----------------------------------------------------------
-# Step 1: 更新系统
-# ----------------------------------------------------------
-echo "[Step 1/6] 更新系统..."
+# ==========================================================
+# Step 1: 购买并初始化云服务器
+# ==========================================================
+# 购买部分由学员在云厂商控制台完成，脚本负责系统初始化。
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[Step 1/6] 初始化云服务器"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 apt update && apt upgrade -y
-echo "✅ 系统更新完成"
+apt install -y curl git
+echo ""
+echo "✅ Step 1 完成：系统已更新"
 echo ""
 
-# ----------------------------------------------------------
-# Step 2: 安装 Docker
-# ----------------------------------------------------------
-echo "[Step 2/6] 安装 Docker..."
-if command -v docker &> /dev/null; then
-    echo "Docker 已安装，跳过"
-else
-    curl -fsSL https://get.docker.com | sh
-    systemctl enable docker
+# ==========================================================
+# Step 2: 安装 Node.js 与 OpenClaw
+# ==========================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[Step 2/6] 安装 Node.js 与 OpenClaw"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# 安装 Node.js 24（官方推荐：Node 24，最低要求 Node 22.16+）
+NODE_MAJOR=""
+if command -v node &> /dev/null; then
+    NODE_MAJOR=$(node -v | grep -oP '(?<=v)\d+')
 fi
-docker --version
-docker compose version
-echo "✅ Docker 安装完成"
+
+if [ -z "$NODE_MAJOR" ] || [ "$NODE_MAJOR" -lt 24 ]; then
+    echo "安装 Node.js 24..."
+    curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+    apt install -y nodejs
+else
+    echo "Node.js $(node -v) 已安装，跳过"
+fi
+
+echo "Node.js: $(node -v)"
+echo "npm: $(npm -v)"
+
+# 安装 OpenClaw
+echo ""
+echo "安装 OpenClaw..."
+npm install -g openclaw@latest
+
+# 生成 shell 补全（避免 SSH 登录时报错）
+mkdir -p /root/.openclaw/completions
+openclaw completion > /root/.openclaw/completions/openclaw.bash 2>/dev/null || true
+
+echo ""
+echo "✅ Step 2 完成：Node.js $(node -v) + OpenClaw 已安装"
 echo ""
 
-# ----------------------------------------------------------
-# Step 3: 部署 OpenClaw
-# ----------------------------------------------------------
-echo "[Step 3/6] 部署 OpenClaw..."
-mkdir -p /opt/openclaw
-cd /opt/openclaw
+# ==========================================================
+# Step 3: 配置 API Key 并启动 Gateway
+# ==========================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[Step 3/6] 配置 API Key 并启动 Gateway"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
 
-# 配置 .env
-ENV_VALID=false
-if [ -f .env ]; then
-    # 文件存在，检查内容是否有效
-    if grep -q 'OPENAI_API_KEY=.' .env && ! grep -q 'OPENAI_API_KEY=sk-xxx' .env; then
-        echo ".env 已存在，内容如下："
+# 确保配置目录存在
+mkdir -p /root/.openclaw
+
+# 配置 API Key
+ENV_FILE="/opt/openclaw.env"
+NEED_CONFIG=true
+
+if [ -f "$ENV_FILE" ]; then
+    if grep -q 'OPENAI_API_KEY=.' "$ENV_FILE" && ! grep -q 'OPENAI_API_KEY=sk-xxx' "$ENV_FILE"; then
+        echo "API 配置已存在："
         echo "---"
-        cat .env
+        cat "$ENV_FILE"
         echo "---"
-        read -rp "是否使用现有配置？[Y/n]：" USE_EXISTING
-        if [[ ! "$USE_EXISTING" =~ ^[Nn]$ ]]; then
-            ENV_VALID=true
+        read -rp "是否重新配置？[y/N]：" RECONFIG
+        if [[ ! "$RECONFIG" =~ ^[Yy]$ ]]; then
+            NEED_CONFIG=false
         fi
-    else
-        echo "⚠️  .env 文件存在但 API Key 未配置（仍是占位符），需要重新配置。"
     fi
 fi
 
-if [ "$ENV_VALID" = false ]; then
-    echo ""
+if [ "$NEED_CONFIG" = true ]; then
     echo "请选择你的大模型 API 提供商："
     echo "  1) DeepSeek（推荐，国内性价比最高）"
     echo "  2) 豆包（火山引擎）"
@@ -100,115 +139,45 @@ if [ "$ENV_VALID" = false ]; then
         exit 1
     fi
 
-    cat > .env << ENV_EOF
+    cat > "$ENV_FILE" << ENV_EOF
 OPENAI_API_KEY=${API_KEY}
 OPENAI_BASE_URL=${BASE_URL}
 ENV_EOF
+    chmod 600 "$ENV_FILE"
 
-    echo "✅ .env 已创建（${PROVIDER_NAME}）"
+    echo "✅ API 配置完成（${PROVIDER_NAME}）"
 fi
 
-# 创建 docker-compose.yml
-cat > docker-compose.yml << 'COMPOSE_EOF'
-services:
-  openclaw:
-    image: ghcr.io/openclaw/openclaw:latest
-    ports:
-      - "127.0.0.1:18789:18789"
-    volumes:
-      - openclaw-data:/root/.openclaw
-    env_file:
-      - .env
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+# 配置 gateway 为 local 模式
+openclaw config set gateway.mode local 2>/dev/null || true
 
-volumes:
-  openclaw-data:
-    driver: local
-COMPOSE_EOF
-
-docker compose pull
-
-# 启动前检查端口占用
-PORT_PID=$(ss -tlnp | grep ':18789' | grep -oP 'pid=\K[0-9]+' | head -1)
-if [ -n "$PORT_PID" ]; then
-    PORT_CMD=$(ps -p "$PORT_PID" -o comm= 2>/dev/null || echo "未知")
-    echo ""
-    echo "⚠️  端口 18789 已被占用："
-    echo "   PID: ${PORT_PID}"
-    echo "   进程: ${PORT_CMD}"
-    echo ""
-
-    # 判断是否为 Docker 相关进程
-    if echo "$PORT_CMD" | grep -qiE "docker|containerd"; then
-        echo "   看起来是一个旧的 Docker 容器在占用。"
-        echo "   正在尝试清理旧容器..."
-        docker compose down 2>/dev/null || true
-        # 如果不是当前目录的 compose，尝试全局清理
-        PORT_PID_AFTER=$(ss -tlnp | grep ':18789' | grep -oP 'pid=\K[0-9]+' | head -1)
-        if [ -n "$PORT_PID_AFTER" ]; then
-            echo "   旧容器清理后端口仍被占用，尝试停止占用容器..."
-            CONTAINER_ID=$(docker ps --format '{{.ID}} {{.Ports}}' | grep '18789' | awk '{print $1}')
-            if [ -n "$CONTAINER_ID" ]; then
-                docker stop "$CONTAINER_ID" && docker rm "$CONTAINER_ID"
-                echo "   ✅ 旧容器已清理"
-            fi
-        else
-            echo "   ✅ 旧容器已清理"
-        fi
-    else
-        echo "   该进程不是 Docker 容器（可能是 npm 直装的 OpenClaw）。"
-        echo ""
-        read -rp "   是否杀掉该进程以释放端口？[y/N]：" KILL_CHOICE
-        if [[ "$KILL_CHOICE" =~ ^[Yy]$ ]]; then
-            kill "$PORT_PID"
-            sleep 2
-            # 检查是否成功释放
-            if ss -tlnp | grep -q ':18789'; then
-                echo "   进程未退出，尝试强制杀掉..."
-                kill -9 "$PORT_PID" 2>/dev/null || true
-                sleep 1
-            fi
-            echo "   ✅ 端口已释放"
-        else
-            echo ""
-            echo "   ❌ 端口仍被占用，无法启动 OpenClaw。"
-            echo "   请手动处理后重新运行脚本："
-            echo "     ss -tlnp | grep 18789    # 查看占用进程"
-            echo "     kill <PID>                # 杀掉进程"
-            echo "     sudo ./setup-openclaw.sh  # 重新运行"
-            exit 1
-        fi
-    fi
-    echo ""
-fi
-
-docker compose up -d
-echo "✅ OpenClaw 容器已启动"
+# 配置 systemd 系统级服务
 echo ""
+echo "配置 systemd 服务..."
 
-# ----------------------------------------------------------
-# Step 4: 配置 systemd 双保险
-# ----------------------------------------------------------
-echo "[Step 4/6] 配置 systemd 双保险..."
-cat > /etc/systemd/system/openclaw.service << 'SERVICE_EOF'
+# 清理可能残留的用户级服务（避免端口冲突）
+if systemctl --user is-active openclaw-gateway &> /dev/null 2>&1; then
+    echo "检测到残留的用户级服务，正在清理..."
+    systemctl --user stop openclaw-gateway 2>/dev/null || true
+    systemctl --user disable openclaw-gateway 2>/dev/null || true
+    echo "✅ 用户级服务已清理"
+fi
+
+OPENCLAW_BIN=$(which openclaw)
+
+cat > /etc/systemd/system/openclaw.service << SERVICE_EOF
 [Unit]
-Description=OpenClaw Docker Compose
-Requires=docker.service
-After=docker.service network-online.target
+Description=OpenClaw Gateway
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/openclaw
-ExecStartPre=/usr/bin/docker compose down
-ExecStart=/usr/bin/docker compose up
-ExecStop=/usr/bin/docker compose down
+EnvironmentFile=/opt/openclaw.env
+Environment=HOME=/root
+ExecStart=${OPENCLAW_BIN} gateway --port 18789
 Restart=always
-RestartSec=10
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
@@ -216,13 +185,42 @@ SERVICE_EOF
 
 systemctl daemon-reload
 systemctl enable openclaw
-echo "✅ systemd 双保险已配置"
+
+# 启动前检查端口占用
+PORT_PID=$(ss -tlnp | grep ':18789' | grep -oP 'pid=\K[0-9]+' | head -1)
+if [ -n "$PORT_PID" ]; then
+    echo "⚠️  端口 18789 被 PID ${PORT_PID} 占用，正在清理..."
+    kill "$PORT_PID" 2>/dev/null || true
+    sleep 2
+    if ss -tlnp | grep -q ':18789'; then
+        kill -9 "$PORT_PID" 2>/dev/null || true
+        sleep 1
+    fi
+    echo "✅ 端口已释放"
+fi
+
+systemctl start openclaw
+sleep 3
+
+if systemctl is-active --quiet openclaw; then
+    echo ""
+    echo "✅ Step 3 完成：Gateway 已启动并设为开机自启"
+else
+    echo ""
+    echo "⚠️  Gateway 启动可能需要几秒，请稍后运行："
+    echo "   systemctl status openclaw"
+    echo "   journalctl -u openclaw --no-pager -n 20"
+fi
 echo ""
 
-# ----------------------------------------------------------
-# Step 5: 安装 Tailscale
-# ----------------------------------------------------------
-echo "[Step 5/6] 安装 Tailscale..."
+# ==========================================================
+# Step 4: 安装 Tailscale
+# ==========================================================
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[Step 4/6] 安装 Tailscale"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
 if command -v tailscale &> /dev/null; then
     echo "Tailscale 已安装，跳过"
 else
@@ -236,48 +234,89 @@ if ! grep -q '8.8.8.8' /etc/resolv.conf 2>/dev/null; then
     echo "   已添加公网 DNS 8.8.8.8（用于 HTTPS 证书获取）"
 fi
 
-echo "✅ Tailscale 安装完成"
+echo ""
+echo "✅ Step 4 完成：Tailscale 已安装"
 echo ""
 
-# ----------------------------------------------------------
-# Step 6: 输出后续操作提示
-# ----------------------------------------------------------
+# ==========================================================
+# 自动化部分结束，输出后续手动操作指南
+# ==========================================================
 echo "=========================================="
-echo "  ✅ 自动化部署完成！"
+echo "  ✅ 自动化部署完成（Step 1-4）！"
 echo "=========================================="
 echo ""
-echo "接下来需要手动完成以下操作："
+echo "💡 常用命令："
+echo "   systemctl status openclaw          # 查看 Gateway 状态"
+echo "   journalctl -u openclaw -f          # 查看实时日志"
+echo "   systemctl restart openclaw         # 重启 Gateway"
+echo "   openclaw config get gateway        # 查看 Gateway 配置"
 echo ""
-echo "1️⃣  Tailscale 认证："
-echo "   sudo tailscale up"
 echo ""
-echo "2️⃣  开启 Serve（私有访问）："
-echo "   tailscale serve --bg 18789"
+echo "=========================================="
+echo "  接下来请手动完成 Step 5（必须）和 Step 6（可选）"
+echo "=========================================="
 echo ""
-echo "3️⃣  预获取 HTTPS 证书（重要！避免首次访问超时）："
-echo "   tailscale cert \$(tailscale status --self --json | grep -oP '\"DNSName\":\"\\K[^\"]*' | sed 's/\\.$//')"
-echo "   # 如果上面命令报错，手动执行："
-echo "   # tailscale cert <你的设备名>.tailnet.ts.net"
 echo ""
-echo "4️⃣  配置 Gateway 认证："
-echo "   docker compose exec openclaw bash"
-echo "   openclaw doctor --generate-gateway-token"
-echo "   openclaw config set gateway.auth.mode token"
-echo "   openclaw config set gateway.auth.token \"你的令牌\""
-echo "   openclaw config set gateway.bind loopback"
-echo "   openclaw config set gateway.controlUi.allowInsecureAuth false"
-echo "   exit && docker compose restart"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[Step 5/6] 配置 Tailscale Serve 与 Dashboard 访问"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
-echo "5️⃣  开启 Tailscale SSH 并关闭公网 SSH："
-echo "   sudo tailscale set --ssh"
-echo "   # 去云厂商控制台安全组中删除 22 端口"
+echo "5.1  Tailscale 认证（将服务器加入你的私有网络）："
+echo "     sudo tailscale up"
+echo "     # 按提示在浏览器中完成认证"
 echo ""
-echo "6️⃣  在个人设备安装 Tailscale 后访问："
-echo "   https://$(hostname).tailnet.ts.net"
+echo "5.2  开启 Tailscale Serve（HTTPS 代理）："
+echo "     tailscale serve --bg 18789"
 echo ""
-echo "⚠️  如果你的笔记本使用了 Clash / V2Ray 等代理工具，"
+echo "5.3  预获取 HTTPS 证书（重要！避免首次访问超时）："
+echo "     # 先获取你的 Tailscale 域名："
+echo "     tailscale status --self --json | grep -m1 DNSName | tr -d ' \",' | cut -d: -f2 | sed 's/\.\$//'"
+echo "     # 然后用输出的域名执行（例：tailscale cert myhost.tail1234.ts.net）："
+echo "     tailscale cert <上面输出的域名>"
+echo ""
+echo "5.4  配置 allowedOrigins（必须！否则浏览器访问会报 origin not allowed）："
+echo "     # 将 <你的域名> 替换为 5.3 中获取的 Tailscale 域名："
+echo "     openclaw config set gateway.controlUi.allowedOrigins '[\"http://localhost:18789\",\"http://127.0.0.1:18789\",\"https://<你的域名>\"]'"
+echo "     systemctl restart openclaw"
+echo ""
+echo "5.5  获取 Dashboard 访问地址："
+echo "     openclaw dashboard --no-open"
+echo "     # 将输出 URL 中的 127.0.0.1 替换为你的 Tailscale 域名"
+echo "     # 例如：https://你的设备名.tailnet.ts.net/#token=你的令牌"
+echo ""
+echo "5.6  首次浏览器访问需要设备配对："
+echo "     # 浏览器点 Connect 后如果提示 pairing required，在服务器执行："
+echo "     openclaw devices list"
+echo "     openclaw devices approve <Request 列中的 ID>"
+echo "     # 然后回浏览器重新点击 Connect"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "[Step 6/6] 开启 Tailscale SSH 并关闭公网 SSH（可选）"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "   此步骤为安全加固，建议熟悉 Tailscale 后再操作。"
+echo "   跳过不影响使用，公网 SSH 仍可正常连接。"
+echo ""
+echo "6.1  在服务器上开启 Tailscale SSH："
+echo "     sudo tailscale set --ssh"
+echo ""
+echo "6.2  验证 Tailscale SSH（在你的 MacBook 本地终端执行）："
+echo "     ssh root@<你的设备名>.tailnet.ts.net"
+echo "     # ⚠️ 务必确认能连上再执行下一步！"
+echo ""
+echo "     # VS Code Remote SSH 配置（添加到本地 ~/.ssh/config）："
+echo "     # Host openclaw-dev"
+echo "     #     HostName <你的设备名>.tailnet.ts.net"
+echo "     #     User root"
+echo ""
+echo "6.3  确认能连上后，关闭公网 SSH："
+echo "     # ⚠️ 务必先完成 6.2 验证！否则关闭后将无法连接服务器！"
+echo "     # 去云厂商控制台 → 安全组 → 删除 22 端口的放行规则"
+echo ""
+echo ""
+echo "⚠️  代理工具注意事项："
+echo "   如果你的笔记本使用了 Clash / V2Ray 等代理工具，"
 echo "   需要配置 *.ts.net 和 100.0.0.0/8 走直连（DIRECT），"
-echo "   否则浏览器可能无法访问 Dashboard。"
-echo "   详见教辅资料 checklists/troubleshooting.md"
+echo "   否则浏览器可能无法通过 Tailscale 连接。"
 echo ""
 echo "=========================================="

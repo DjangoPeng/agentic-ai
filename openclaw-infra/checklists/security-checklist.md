@@ -7,31 +7,37 @@
 
 ## 🔴 网络层（最高优先级）
 
-- [ ] 云服务器安全组：**关闭所有入站端口**（包括 22/SSH，改用 Tailscale SSH）
-- [ ] OpenClaw 绑定 `127.0.0.1`（不是 `0.0.0.0`）
-- [ ] Docker ports 写 `"127.0.0.1:18789:18789"`（不是 `"18789:18789"`）
+- [ ] OpenClaw gateway 绑定 loopback（`gateway.mode local`）
 - [ ] Tailscale 已安装并 `tailscale up` 认证成功
 - [ ] Tailscale Serve 已配置 `tailscale serve --bg 18789`
+- [ ] 已添加公网 DNS（`echo "nameserver 8.8.8.8" >> /etc/resolv.conf`）
+- [ ] 云服务器安全组：**关闭所有入站端口**（包括 22/SSH，改用 Tailscale SSH）
+
 
 **验证命令：**
 ```bash
 ss -tlnp | grep 18789
 # 应显示 127.0.0.1:18789，不应显示 0.0.0.0:18789
+
+tailscale serve status
+# 应显示 serve 已启用
 ```
 
 ---
 
 ## 🟡 认证层
 
-- [ ] `gateway.auth.mode` 设为 `token`
-- [ ] 使用 `openclaw doctor --generate-gateway-token` 生成强令牌
-- [ ] `gateway.controlUi.allowInsecureAuth` 设为 `false`
-- [ ] `gateway.bind` 设为 `loopback`
+- [ ] Gateway 认证已配置（`openclaw dashboard --no-open` 能输出 Token URL）
+- [ ] `allowedOrigins` 已配置 Tailscale 域名
+- [ ] 设备配对已完成（`openclaw devices list` 显示 approved）
 
 **验证命令：**
 ```bash
-docker compose exec openclaw openclaw config get gateway.auth.mode
-# 应返回 token
+openclaw config get gateway
+# 确认 mode 为 local
+
+curl http://localhost:18789/health
+# 应返回正常响应
 ```
 
 ---
@@ -39,16 +45,17 @@ docker compose exec openclaw openclaw config get gateway.auth.mode
 ## 🔵 运维层
 
 - [ ] systemd 服务已创建并 `systemctl enable openclaw`
-- [ ] Docker `restart: unless-stopped` 已配置
-- [ ] 日志 rotation 已配置（`max-size: 10m, max-file: 3`）
+- [ ] EnvironmentFile 指向 `/opt/openclaw.env`（权限 600）
+- [ ] Restart=always 已配置
 - [ ] Tailscale SSH 已启用 `sudo tailscale set --ssh`
 - [ ] 公网 SSH（22 端口）已在安全组中删除
+- [ ] Node.js 版本 ≥ 22.16（推荐 24）
 
 **验证命令：**
 ```bash
 sudo systemctl status openclaw     # 应显示 active (running)
 tailscale status                    # 应显示设备在线
-curl http://localhost:18789/health  # 应返回正常响应
+node -v                             # 应显示 v24.x
 ```
 
 ---
@@ -59,8 +66,8 @@ curl http://localhost:18789/health  # 应返回正常响应
 
 | 能力 | 状态 |
 |------|------|
-| 7×24 不掉线 | ✅ Docker restart + systemd 双保险 |
+| 7×24 不掉线 | ✅ systemd Restart=always + enable 开机自启 |
 | 公网不可见 | ✅ 零公网 IP，Shodan/Censys 扫不到 |
-| 强认证 | ✅ Gateway Token，拒绝未授权访问 |
-| 端到端加密 | ✅ WireGuard 隧道 |
+| 认证保护 | ✅ Gateway Token + 设备配对 |
+| 端到端加密 | ✅ WireGuard 隧道 + Tailscale Serve HTTPS |
 | 数据主权 | ✅ 数据全在你自己的服务器上 |

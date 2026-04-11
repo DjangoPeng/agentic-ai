@@ -1,40 +1,43 @@
 # ============================================================
-# OpenClaw Docker Compose systemd 服务文件
+# OpenClaw Gateway systemd 服务文件
 #
 # 安装位置：/etc/systemd/system/openclaw.service
 #
 # 作用：
-# - 系统启动后自动拉起 Docker Compose（双保险第二层）
-# - Docker 的 restart: unless-stopped 是第一层
-# - 两层一起 = 无论发生什么，Agent 都会自动回来
+# - 系统启动后自动拉起 OpenClaw Gateway
+# - 进程崩溃后 5 秒自动重启
+# - API Key 从 EnvironmentFile 安全注入
 #
 # 安装命令：
 #   sudo cp openclaw.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable --now openclaw
+#
+# 前置条件：
+#   - 已通过 npm install -g openclaw@latest 安装 OpenClaw
+#   - 已创建 /opt/openclaw.env 并填入 API Key
 # ============================================================
 
 [Unit]
-Description=OpenClaw Docker Compose
-Requires=docker.service
-After=docker.service network-online.target
+Description=OpenClaw Gateway
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/openclaw
 
-# 启动前先清理可能残留的容器
-ExecStartPre=/usr/bin/docker compose down
+# API Key 等敏感信息从独立文件注入
+EnvironmentFile=/opt/openclaw.env
 
-# 注意：不加 -d，前台运行让 systemd 正确追踪进程
-ExecStart=/usr/bin/docker compose up
+# OpenClaw 需要 HOME 目录读取 ~/.openclaw 配置
+Environment=HOME=/root
 
-# 停止时优雅关闭容器
-ExecStop=/usr/bin/docker compose down
+# 启动 gateway，绑定 18789 端口（默认 loopback，仅本机可访问）
+ExecStart=/usr/bin/openclaw gateway --port 18789
 
-# 异常退出时自动重启
+# 无论什么原因退出，5 秒后自动重启
 Restart=always
-RestartSec=10
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target

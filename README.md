@@ -22,9 +22,8 @@
 .
 ├── openclaw-infra/                # 基础设施：部署、守护进程、安全穿透
 │   ├── configs/
-│   │   ├── docker-compose.yml     # Docker Compose 生产配置
 │   │   ├── .env.example           # 环境变量模板（6 种 API 提供商）
-│   │   └── openclaw.service       # systemd 双保险服务文件
+│   │   └── openclaw.service       # OpenClaw Gateway systemd 服务文件
 │   ├── scripts/
 │   │   ├── setup-openclaw.sh      # 一键部署脚本（交互式）
 │   │   └── commands-cheatsheet.sh # 运维命令速查卡
