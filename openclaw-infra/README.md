@@ -13,8 +13,8 @@
 ## 一键部署
 
 ```bash
-git clone https://github.com/DjangoPeng/ai-agent-architect.git
-cd ai-agent-architect/openclaw-infra
+git clone https://github.com/DjangoPeng/agentic-ai.git
+cd agentic-ai/openclaw-infra
 
 chmod +x scripts/setup-openclaw.sh
 sudo scripts/setup-openclaw.sh
