@@ -37,7 +37,7 @@
 │   ├── README.md                     #   OpenClaw 部署指南
 │   ├── configs/
 │   │   ├── .env.example              #   环境变量模板（6 种 API 提供商）
-│   │   └── openclaw.service          #   OpenClaw Gateway systemd 服务文件
+│   │   └── openclaw.service          #   systemd 服务文件
 │   ├── scripts/
 │   │   ├── setup-openclaw.sh         #   一键部署脚本（交互式）
 │   │   └── commands-cheatsheet.sh    #   运维命令速查卡
@@ -103,9 +103,9 @@
 │  ┌────────────────────────────────────────┐  │
 │  │ Tailscale Serve (HTTPS, 仅 tailnet)   │  │
 │  │         ↓                              │  │
-│  │ Docker: openclaw (127.0.0.1:18789)    │  │
+│  │ OpenClaw Gateway (127.0.0.1:18789)    │  │
 │  │         ↑                              │  │
-│  │ systemd 双保险 (崩溃自动重启)           │  │
+│  │ systemd 守护进程 (崩溃自动重启)         │  │
 │  └────────────────────────────────────────┘  │
 │  数据主权：SOUL.md / 记忆 / 会话 全在你的磁盘  │
 └─────────────────────────────────────────────┘
@@ -115,7 +115,7 @@
 - 零公网 IP — 服务器不暴露任何端口，对 Shodan / Censys 完全不可见
 - WireGuard 端到端加密 — 所有流量经 Tailscale 加密隧道
 - Gateway Token 认证 — 即使进入 tailnet，仍需令牌才能操作
-- 127.0.0.1 绑定 — Docker 容器只监听本机，双重防护
+- 127.0.0.1 绑定 — Gateway 只监听本机回环地址，外部无法直连
 
 > 完整部署步骤见 [openclaw-infra/README.md](openclaw-infra/README.md)
 
