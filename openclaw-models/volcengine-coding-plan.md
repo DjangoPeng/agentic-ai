@@ -48,7 +48,7 @@ https://console.volcengine.com/ark/region:ark+cn-beijing/apikey
 ```
 
 1. 点击 **「创建 API Key」**
-2. 生成后复制密钥（格式类似 `f218f0fd-169e-4c88-8e67-1bcd23e86697`）
+2. 生成后复制密钥
 3. **妥善保管，不要泄露**
 
 > 如果你之前已经有火山引擎的 API Key，购买 Coding Plan 后原有的 Key 可以直接使用，不需要重新创建。
@@ -181,7 +181,7 @@ journalctl -u openclaw -f
 在微信或企微里给 Agent 发送：
 
 ```
-/model volcengine/kimi-k2.5
+/model volcengine/ark-code-latest
 ```
 
 可用的模型切换命令：
