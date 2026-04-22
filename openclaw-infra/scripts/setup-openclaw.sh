@@ -91,6 +91,7 @@ echo ""
 
 # 确保配置目录存在
 mkdir -p /root/.openclaw
+mkdir -p /opt
 
 # 配置 API Key
 ENV_FILE="/opt/openclaw.env"
