@@ -1,0 +1,169 @@
+{
+  "gateway": {
+    "mode": "local",
+    "auth": {
+      "mode": "token",
+      "token": "<YOUR_GATEWAY_TOKEN>"
+    },
+    "controlUi": {
+      "allowedOrigins": [
+        "http://localhost:18789",
+        "http://127.0.0.1:18789",
+        "https://<YOUR_TAILSCALE_DOMAIN>"
+      ]
+    }
+  },
+  "models": {
+    "mode": "replace",
+    "providers": {
+      "volcengine": {
+        "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+        "apiKey": "<YOUR_VOLCENGINE_API_KEY>",
+        "api": "openai-completions",
+        "models": [
+          {
+            "id": "ark-code-latest",
+            "name": "ark-code-latest",
+            "contextWindow": 256000,
+            "maxTokens": 32000,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "kimi-k2.5",
+            "name": "kimi-k2.5",
+            "contextWindow": 256000,
+            "maxTokens": 32000,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "deepseek-v3.2",
+            "name": "deepseek-v3.2",
+            "contextWindow": 128000,
+            "maxTokens": 32000,
+            "input": ["text"]
+          },
+          {
+            "id": "glm-4.7",
+            "name": "glm-4.7",
+            "contextWindow": 200000,
+            "maxTokens": 128000,
+            "input": ["text"]
+          },
+          {
+            "id": "doubao-seed-2.0-code",
+            "name": "doubao-seed-2.0-code",
+            "contextWindow": 256000,
+            "maxTokens": 128000,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "doubao-seed-2.0-pro",
+            "name": "doubao-seed-2.0-pro",
+            "contextWindow": 256000,
+            "maxTokens": 128000,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "doubao-seed-2.0-lite",
+            "name": "doubao-seed-2.0-lite",
+            "contextWindow": 256000,
+            "maxTokens": 128000,
+            "input": ["text", "image"]
+          },
+          {
+            "id": "minimax-m2.5",
+            "name": "minimax-m2.5",
+            "contextWindow": 200000,
+            "maxTokens": 128000,
+            "input": ["text"]
+          },
+          {
+            "id": "doubao-seed-code",
+            "name": "doubao-seed-code",
+            "contextWindow": 256000,
+            "maxTokens": 32000,
+            "input": ["text", "image"]
+          }
+        ]
+      },
+      "hotai": {
+        "baseUrl": "https://www.hotaitool.net/v1",
+        "apiKey": "<YOUR_HOTAI_API_KEY>",
+        "api": "openai-responses",
+        "models": [
+          {
+            "id": "gpt-5.4",
+            "name": "GPT-5.4"
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "model": "volcengine/ark-code-latest",
+      "memorySearch": {
+        "provider": "openai",
+        "model": "doubao-embedding-vision",
+        "remote": {
+          "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+          "apiKey": "<YOUR_VOLCENGINE_API_KEY>"
+        }
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "openclaw-weixin": { "enabled": true },
+      "volcengine": { "enabled": true },
+      "wecom-openclaw-plugin": { "enabled": true },
+      "openclaw-lark": { "enabled": true }
+    },
+    "allow": [
+      "openclaw-weixin",
+      "memory-core",
+      "volcengine",
+      "wecom-openclaw-plugin",
+      "openclaw-lark"
+    ]
+  },
+  "channels": {
+    "openclaw-weixin": {
+      "channelConfigUpdatedAt": "2026-04-12T14:23:32.203Z"
+    },
+    "wecom": {
+      "enabled": true,
+      "botId": "<YOUR_WECOM_BOT_ID>",
+      "secret": "<YOUR_WECOM_SECRET>"
+    },
+    "feishu": {
+      "enabled": true,
+      "appId": "<YOUR_FEISHU_APP_ID>",
+      "appSecret": "<YOUR_FEISHU_APP_SECRET>",
+      "connectionMode": "websocket",
+      "domain": "feishu",
+      "dmPolicy": "allowlist",
+      "allowFrom": ["<YOUR_FEISHU_USER_ID>"],
+      "groupPolicy": "open",
+      "requireMention": true,
+      "tools": { "perm": true },
+      "webhookPath": "/feishu/events",
+      "reactionNotifications": "own",
+      "typingIndicator": true,
+      "resolveSenderNames": true
+    }
+  },
+  "tools": {
+    "alsoAllow": ["wecom_mcp"],
+    "elevated": {
+      "enabled": true,
+      "allowFrom": {
+        "feishu": ["<YOUR_FEISHU_USER_ID>"],
+        "heartbeat": ["*"]
+      }
+    }
+  }
+}

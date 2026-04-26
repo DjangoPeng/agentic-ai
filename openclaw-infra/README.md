@@ -10,14 +10,14 @@
 | 大模型 API Key | DeepSeek / 豆包 / 通义千问 / Kimi / OpenAI 均可 | 按用量 |
 | Tailscale 账号 | https://tailscale.com （GitHub 登录即可） | 免费 |
 
-## 一键部署
+## 一键部署（root 用户）
 
 ```bash
 git clone https://github.com/DjangoPeng/agentic-ai.git
-cd agentic-ai/openclaw-infra
+cd agentic-ai/openclaw-infra/scripts
 
-chmod +x scripts/setup-openclaw.sh
-sudo scripts/setup-openclaw.sh
+chmod +x setup-openclaw.sh
+./setup-openclaw.sh
 ```
 
 脚本自动完成 4 个步骤：

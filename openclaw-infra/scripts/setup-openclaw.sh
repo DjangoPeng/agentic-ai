@@ -3,9 +3,9 @@
 # OpenClaw 一键部署脚本
 # 课程：AI 业务流架构师 · 第二节课实战
 #
-# 使用方法：
+# 使用方法（root 用户）：
 #   chmod +x setup-openclaw.sh
-#   sudo ./setup-openclaw.sh
+#   ./setup-openclaw.sh
 #
 # 前置条件：
 #   - Ubuntu 24.04 LTS（推荐火山引擎 2C4G ¥99/年）

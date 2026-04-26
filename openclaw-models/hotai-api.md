@@ -59,71 +59,147 @@ Hotai 提供多档充值套餐，按需选择：
 
 ---
 
-## 三、在 OpenClaw 中配置 Hotai
+## 三、配置 OpenClaw 使用 Hotai
 
-### Step 1：编辑配置文件
+配置文件路径：`~/.openclaw/openclaw.json`
 
 ```bash
 nano ~/.openclaw/openclaw.json
 ```
 
-在 `models.providers` 中添加 `hotai` 配置：
+### 3.1 添加 Hotai Provider
+
+在 `models.providers` 中添加 `hotai` 配置块：
 
 ```json
-"hotai": {
-    "baseUrl": "https://www.hotaitool.net/v1",
-    "apiKey": "你的 Hotai API Key",
-    "api": "openai-responses",
-    "models": [
-        {
-            "id": "gpt-5.4",
-            "name": "GPT-5.4"
+"models": {
+    "mode": "replace",
+    "providers": {
+        "hotai": {
+            "baseUrl": "https://www.hotaitool.net/v1",
+            "apiKey": "<YOUR_HOTAI_API_KEY>",
+            "api": "openai-responses",
+            "models": [
+                {
+                    "id": "gpt-5.4",
+                    "name": "GPT-5.4"
+                }
+            ]
         }
-    ]
+    }
 }
 ```
 
-**配置说明：**
+**字段逐项说明：**
 
 | 字段 | 值 | 说明 |
 |------|---|------|
-| baseUrl | `https://www.hotaitool.net/v1` | Hotai 的 API 端点，固定不变 |
-| apiKey | `sk-xxxx` | 你在 Dashboard 中生成的 Key |
-| api | `openai-responses` | API 协议格式，Hotai 兼容 OpenAI Responses API |
-| models.id | `gpt-5.4` | 模型标识，用于 `/model` 命令切换 |
+| `baseUrl` | `https://www.hotaitool.net/v1` | Hotai 的 API 端点，固定不变 |
+| `apiKey` | `sk-xxxx` | 你在 Hotai Dashboard 中生成的 Key |
+| `api` | `"openai-responses"` | API 协议格式。Hotai 兼容 OpenAI Responses API（注意：不是 `openai-completions`，Hotai 用的是 Responses 协议） |
+| `models[].id` | `"gpt-5.4"` | 模型标识符，用于 `/model` 命令切换时引用 |
+| `models[].name` | `"GPT-5.4"` | 显示名称，在 Dashboard 和日志中展示 |
 
-### Step 2：设置默认模型（可选）
+> **关于 `api` 字段的区别：** 火山引擎用 `"openai-completions"`（Chat Completions 协议），Hotai 用 `"openai-responses"`（Responses 协议）。填错会导致 API 调用失败。
 
-如果你希望 Hotai 的 GPT-5.4 作为默认模型：
+### 3.2 同时配置 Hotai + 火山引擎（推荐的双引擎配置）
+
+大多数用户会同时配置国产模型（日常省钱）和海外旗舰（复杂任务切换）。以下是双引擎共存的完整 `models` 配置：
 
 ```json
-"agents": {
-    "defaults": {
-        "model": "hotai/gpt-5.4"
+"models": {
+    "mode": "replace",
+    "providers": {
+        "volcengine": {
+            "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
+            "apiKey": "<YOUR_VOLCENGINE_API_KEY>",
+            "api": "openai-completions",
+            "models": [
+                {
+                    "id": "ark-code-latest",
+                    "name": "ark-code-latest",
+                    "contextWindow": 256000,
+                    "maxTokens": 32000,
+                    "input": ["text", "image"]
+                },
+                {
+                    "id": "kimi-k2.5",
+                    "name": "kimi-k2.5",
+                    "contextWindow": 256000,
+                    "maxTokens": 32000,
+                    "input": ["text", "image"]
+                },
+                {
+                    "id": "deepseek-v3.2",
+                    "name": "deepseek-v3.2",
+                    "contextWindow": 128000,
+                    "maxTokens": 32000,
+                    "input": ["text"]
+                }
+            ]
+        },
+        "hotai": {
+            "baseUrl": "https://www.hotaitool.net/v1",
+            "apiKey": "<YOUR_HOTAI_API_KEY>",
+            "api": "openai-responses",
+            "models": [
+                {
+                    "id": "gpt-5.4",
+                    "name": "GPT-5.4"
+                }
+            ]
+        }
     }
 }
 ```
 
-如果你希望国产模型作为默认、GPT-5.4 作为备选（推荐）：
+**两个 provider 的关键区别：**
+
+| 字段 | volcengine（火山引擎） | hotai（海外代理） |
+|------|---------------------|-----------------|
+| `baseUrl` | `/api/coding/v3` | `/v1` |
+| `api` | `openai-completions` | `openai-responses` |
+| 计费 | Coding Plan 包月 | 按量计费 |
+| 适合 | 日常任务 | 复杂推理任务 |
+
+### 3.3 设置默认模型
+
+在 `agents.defaults` 中指定默认使用哪个模型：
 
 ```json
 "agents": {
     "defaults": {
-        "model": "volcengine/kimi-k2.5"
+        "compaction": {
+            "mode": "safeguard"
+        },
+        "model": "volcengine/ark-code-latest"
     }
 }
 ```
 
-然后通过 `/model hotai/gpt-5.4` 命令临时切换。
+**推荐策略：**
 
-### Step 3：删除旧缓存并重启
+- 默认模型设为国产模型（如 `volcengine/ark-code-latest`），日常省钱
+- 需要旗舰推理时，在聊天中用 `/model hotai/gpt-5.4` 临时切换
+- 用完切回：`/model volcengine/ark-code-latest`
+
+如果你希望默认就使用 GPT-5.4（不在乎成本）：
+
+```json
+"model": "hotai/gpt-5.4"
+```
+
+### 3.4 应用配置
 
 ```bash
+# 1. 删除旧的 models.json
 rm ~/.openclaw/agents/main/agent/models.json
+
+# 2. 重启网关
 systemctl restart openclaw
 ```
 
-### Step 4：验证
+### 3.5 验证
 
 在微信或企微中发送：
 
@@ -159,9 +235,10 @@ Hotai 代理支持的主要模型（以平台实际提供为准）：
 配置完成后，你可以随时在聊天中切换模型：
 
 ```
-/model hotai/gpt-5.4          → 切到 GPT-5.4（旗舰推理）
-/model volcengine/kimi-k2.5   → 切回 Kimi（日常省钱）
-/model volcengine/deepseek-v3.2 → 切到 DeepSeek（深度推理）
+/model hotai/gpt-5.4              → 切到 GPT-5.4（旗舰推理）
+/model volcengine/kimi-k2.5       → 切回 Kimi（日常省钱）
+/model volcengine/deepseek-v3.2   → 切到 DeepSeek（深度推理）
+/model volcengine/ark-code-latest  → 切到方舟自动调度（默认）
 ```
 
 临时切换只影响当前会话，不改变默认配置。
@@ -195,10 +272,11 @@ Hotai 按 Token 计费，OpenClaw 的 Agent 模式消耗较大（每次对话约
 |------|------|----------|
 | 401 Unauthorized | API Key 错误或已失效 | 重新从 Dashboard 复制 Key |
 | 403 Forbidden | 余额不足 | 登录 Dashboard 充值 |
-| 回复很慢（>60秒） | 海外模型本身推理较慢 | GPT-5.4 复杂任务正常需要 10-30 秒 |
+| 回复很慢（>60秒） | 海外模型推理本身较慢 | GPT-5.4 复杂任务正常需要 10-30 秒 |
 | 连接超时 | 网络波动 | 稍后重试，或检查服务器网络 |
-| `/model` 切换后无效 | models.json 缓存 | 删除 models.json 并重启网关 |
+| `/model` 切换后无效 | models.json 缓存 | 删除 `~/.openclaw/agents/main/agent/models.json` 后重启 |
 | 模型不存在 | 模型名称写错 | 检查 Dashboard 中的实际模型 ID |
+| API 调用失败 | `api` 字段写错 | Hotai 用 `openai-responses`，不是 `openai-completions` |
 
 ---
 

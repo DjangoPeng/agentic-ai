@@ -48,16 +48,16 @@ https://console.volcengine.com/ark/region:ark+cn-beijing/apikey
 ```
 
 1. 点击 **「创建 API Key」**
-2. 生成后复制密钥
+2. 生成后复制密钥（格式类似 `f218f0fd-169e-4c88-8e67-1bcd23e86697`）
 3. **妥善保管，不要泄露**
 
 > 如果你之前已经有火山引擎的 API Key，购买 Coding Plan 后原有的 Key 可以直接使用，不需要重新创建。
 
 ---
 
-## 三、配置 OpenClaw 使用 Coding Plan
+## 三、关键概念：Coding Plan vs 在线推理
 
-### 关键区分：Coding Plan vs 在线推理
+火山引擎方舟平台有两种完全不同的模型调用方式，**务必区分清楚**：
 
 | 项目 | Coding Plan（包月） | 在线推理（按量计费） |
 |------|-------------------|-------------------|
@@ -71,36 +71,91 @@ https://console.volcengine.com/ark/region:ark+cn-beijing/apikey
 
 **简单来说：用 Coding Plan 就不需要创建接入点，直接填模型名即可。** 接入点是在线推理模式的概念，两者不要混淆。
 
-### Step 1：编辑 OpenClaw 配置文件
+---
+
+## 四、配置 OpenClaw 使用 Coding Plan
+
+配置文件路径：`~/.openclaw/openclaw.json`
 
 ```bash
 nano ~/.openclaw/openclaw.json
 ```
 
-#### 配置大模型
+### 4.1 配置大模型 Provider
 
-在 `models.providers` 中添加或修改 `volcengine` 配置：
+在 `models.providers` 中添加 `volcengine` 配置块。以下是完整配置及每个字段的详细说明：
 
 ```json
 "models": {
-    "mode": "merge",
+    "mode": "replace",
     "providers": {
         "volcengine": {
             "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
-            "apiKey": "你的API Key",
+            "apiKey": "<YOUR_VOLCENGINE_API_KEY>",
             "api": "openai-completions",
             "models": [
                 {
+                    "id": "ark-code-latest",
+                    "name": "ark-code-latest",
+                    "contextWindow": 256000,
+                    "maxTokens": 32000,
+                    "input": ["text", "image"]
+                },
+                {
                     "id": "kimi-k2.5",
-                    "name": "Kimi K2.5"
+                    "name": "kimi-k2.5",
+                    "contextWindow": 256000,
+                    "maxTokens": 32000,
+                    "input": ["text", "image"]
                 },
                 {
                     "id": "deepseek-v3.2",
-                    "name": "DeepSeek V3.2"
+                    "name": "deepseek-v3.2",
+                    "contextWindow": 128000,
+                    "maxTokens": 32000,
+                    "input": ["text"]
                 },
                 {
-                    "id": "ark-code-latest",
-                    "name": "Ark Code Latest"
+                    "id": "glm-4.7",
+                    "name": "glm-4.7",
+                    "contextWindow": 200000,
+                    "maxTokens": 128000,
+                    "input": ["text"]
+                },
+                {
+                    "id": "doubao-seed-2.0-code",
+                    "name": "doubao-seed-2.0-code",
+                    "contextWindow": 256000,
+                    "maxTokens": 128000,
+                    "input": ["text", "image"]
+                },
+                {
+                    "id": "doubao-seed-2.0-pro",
+                    "name": "doubao-seed-2.0-pro",
+                    "contextWindow": 256000,
+                    "maxTokens": 128000,
+                    "input": ["text", "image"]
+                },
+                {
+                    "id": "doubao-seed-2.0-lite",
+                    "name": "doubao-seed-2.0-lite",
+                    "contextWindow": 256000,
+                    "maxTokens": 128000,
+                    "input": ["text", "image"]
+                },
+                {
+                    "id": "minimax-m2.5",
+                    "name": "minimax-m2.5",
+                    "contextWindow": 200000,
+                    "maxTokens": 128000,
+                    "input": ["text"]
+                },
+                {
+                    "id": "doubao-seed-code",
+                    "name": "doubao-seed-code",
+                    "contextWindow": 256000,
+                    "maxTokens": 32000,
+                    "input": ["text", "image"]
                 }
             ]
         }
@@ -108,61 +163,113 @@ nano ~/.openclaw/openclaw.json
 }
 ```
 
-**可用模型列表：**
+**字段逐项说明：**
 
-| 模型 ID | 说明 | 推荐场景 |
-|---------|------|---------|
-| `ark-code-latest` | 方舟自动调度最优模型 | 编程任务 |
-| `kimi-k2.5` | 理解力强，响应稳定 | 日常对话和任务执行（推荐） |
-| `deepseek-v3.2` | 深度推理能力强 | 复杂分析任务 |
-| `glm-4.7` | 智谱编程模型 | 代码生成 |
-| `doubao-seed-2.0-code` | 豆包最新编程模型 | 编程任务 |
+| 字段 | 值 | 说明 |
+|------|---|------|
+| `mode` | `"replace"` | 模型列表模式。`replace` 表示完全替换默认模型列表（推荐）；`merge` 表示与默认列表合并 |
+| `baseUrl` | `https://ark.cn-beijing.volces.com/api/coding/v3` | **Coding Plan 专用地址**。⚠️ 写成 `/api/v3` 会走按量计费！ |
+| `apiKey` | 你的火山引擎 API Key | 在方舟控制台的 API Key 管理页面获取 |
+| `api` | `"openai-completions"` | API 协议格式，火山引擎兼容 OpenAI Chat Completions 协议 |
+| `models[].id` | 如 `"kimi-k2.5"` | 模型标识符，Coding Plan 下直接用模型名，不需要接入点 ID |
+| `models[].name` | 如 `"kimi-k2.5"` | 显示名称，在 Dashboard 和 `/model` 命令中展示 |
+| `models[].contextWindow` | 如 `256000` | 模型的最大上下文窗口（Token 数），OpenClaw 用此值管理上下文压缩 |
+| `models[].maxTokens` | 如 `32000` | 单次回复的最大 Token 数 |
+| `models[].input` | `["text"]` 或 `["text", "image"]` | 模型支持的输入类型。包含 `image` 的模型可以处理图片 |
 
-> **建议使用 `ark-code-latest` 或 `kimi-k2.5`。** `ark-code-latest` 由方舟自动调度，模型升级时无需改配置。`kimi-k2.5` 在对话理解和指令执行方面表现最均衡。
+**Coding Plan 可用模型速查：**
 
-#### 配置 Embedding 模型（记忆搜索）
+| 模型 ID | 上下文窗口 | 最大输出 | 支持图片 | 推荐场景 |
+|---------|----------|---------|---------|---------|
+| `ark-code-latest` | 256K | 32K | ✅ | 方舟自动调度最优模型（推荐默认） |
+| `kimi-k2.5` | 256K | 32K | ✅ | 日常对话、指令执行，响应最稳定 |
+| `deepseek-v3.2` | 128K | 32K | ❌ | 深度推理、逻辑分析 |
+| `glm-4.7` | 200K | 128K | ❌ | 代码生成、长文本输出 |
+| `doubao-seed-2.0-code` | 256K | 128K | ✅ | 编程任务，豆包最新编程模型 |
+| `doubao-seed-2.0-pro` | 256K | 128K | ✅ | 综合能力，豆包旗舰 |
+| `doubao-seed-2.0-lite` | 256K | 128K | ✅ | 轻量任务，速度快 |
+| `minimax-m2.5` | 200K | 128K | ❌ | 综合能力均衡 |
+| `doubao-seed-code` | 256K | 32K | ✅ | 编程任务，上一代豆包编程模型 |
 
-在 `agents.defaults` 中添加 `memorySearch` 配置：
+> 你不需要把所有模型都配上。建议至少配 `ark-code-latest`（自动调度）+ `kimi-k2.5`（日常稳定）+ `deepseek-v3.2`（深度推理），其余按需添加。
+
+### 4.2 配置默认模型
+
+在 `agents.defaults` 中指定 OpenClaw 启动时默认使用的模型：
 
 ```json
 "agents": {
     "defaults": {
-        "model": "volcengine/kimi-k2.5",
+        "compaction": {
+            "mode": "safeguard"
+        },
+        "model": "volcengine/ark-code-latest"
+    }
+}
+```
+
+**字段说明：**
+
+| 字段 | 值 | 说明 |
+|------|---|------|
+| `compaction.mode` | `"safeguard"` | 上下文压缩策略。`safeguard` 是安全模式，在上下文接近窗口上限时自动压缩，避免丢失关键信息 |
+| `model` | `"volcengine/ark-code-latest"` | 默认模型，格式为 `provider名/模型id`。这里用的是 volcengine provider 下的 ark-code-latest 模型 |
+
+### 4.3 配置 Embedding 模型（记忆搜索）
+
+在 `agents.defaults` 中添加 `memorySearch` 配置，让 Agent 的记忆检索从关键词匹配升级为语义搜索：
+
+```json
+"agents": {
+    "defaults": {
+        "compaction": {
+            "mode": "safeguard"
+        },
+        "model": "volcengine/ark-code-latest",
         "memorySearch": {
             "provider": "openai",
             "model": "doubao-embedding-vision",
             "remote": {
                 "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
-                "apiKey": "你的API Key（与上面相同）"
+                "apiKey": "<YOUR_VOLCENGINE_API_KEY>"
             }
         }
     }
 }
 ```
 
-Embedding 模型为 OpenClaw 提供语义向量能力：
+**字段说明：**
 
-- 将对话、文档与任务信息转换为高维向量
-- 基于语义相似度进行高效记忆检索
-- 相比关键词匹配，在信息量大、对话长的场景下更准确
+| 字段 | 值 | 说明 |
+|------|---|------|
+| `memorySearch.provider` | `"openai"` | Embedding 接口协议，火山引擎兼容 OpenAI Embeddings 格式，所以填 `openai` |
+| `memorySearch.model` | `"doubao-embedding-vision"` | Embedding 模型名称，这是 Coding Plan 包含的向量模型 |
+| `memorySearch.remote.baseUrl` | Coding Plan 地址 | 与大模型用同一个 Base URL（`/api/coding/v3`） |
+| `memorySearch.remote.apiKey` | 你的火山引擎 API Key | 与大模型用同一个 Key |
 
-### Step 2：删除旧的 models.json
+**为什么需要 Embedding？**
 
-OpenClaw 有一个容易忽略的机制：`models.json` 的优先级高于 `openclaw.json`，且修改 `openclaw.json` 不会自动更新 `models.json`。所以改完配置后必须删除旧文件让它重新生成：
+- 没有 Embedding：Agent 的记忆检索只能靠关键词精确匹配，问"上周聊的那个项目"可能搜不到
+- 有了 Embedding：Agent 把所有记忆转为语义向量，支持模糊搜索和语义关联，大幅提升记忆召回质量
+- 如果不配 Embedding，日志里会持续报 `[memory] sync failed` 错误
+
+### 4.4 应用配置
+
+修改完 `openclaw.json` 后，必须执行以下两步才能生效：
 
 ```bash
+# 1. 删除旧的 models.json（重要！）
+#    OpenClaw 2026.2.26+ 版本中，models.json 优先级高于 openclaw.json
+#    不删除的话，修改不会生效
 rm ~/.openclaw/agents/main/agent/models.json
-```
 
-> 删除后重启网关时，OpenClaw 会自动从 `openclaw.json` 重新生成 `models.json`。
-
-### Step 3：重启网关
-
-```bash
+# 2. 重启网关
 systemctl restart openclaw
 ```
 
-### Step 4：验证
+> ⚠️ **这是最容易踩的坑：** 很多人改了 `openclaw.json` 发现不生效，排查半天才发现是 `models.json` 在"作祟"。每次改完配置都要先删 `models.json` 再重启。
+
+### 4.5 验证
 
 查看日志确认没有报错：
 
@@ -172,40 +279,43 @@ journalctl -u openclaw -f
 
 **正常日志特征：**
 
-- 看到 `[gateway] agent model: volcengine/kimi-k2.5`（或你配置的模型）
+- 看到 `[gateway] agent model: volcengine/ark-code-latest`（或你配置的默认模型）
 - **没有** `[memory] sync failed` 报错（说明 Embedding 配置正确）
 
 在微信或企微中与 Agent 对话，确认模型正常响应。
 
 ---
 
-## 四、切换模型
+## 五、切换模型
 
 ### 临时切换（在聊天中）
 
-在微信或企微里给 Agent 发送：
+在微信或企微里给 Agent 发送 `/model` 命令：
 
 ```
-/model volcengine/ark-code-latest
+/model volcengine/kimi-k2.5
 ```
 
-可用的模型切换命令：
+可用的模型切换命令（取决于你在 models 中配置了哪些模型）：
 
-| 命令 | 切换到 |
-|------|--------|
-| `/model volcengine/kimi-k2.5` | Kimi K2.5 |
-| `/model volcengine/deepseek-v3.2` | DeepSeek V3.2 |
-| `/model volcengine/ark-code-latest` | Ark Code（自动调度） |
+| 命令 | 切换到 | 推荐场景 |
+|------|--------|---------|
+| `/model volcengine/ark-code-latest` | 方舟自动调度 | 编程任务（默认） |
+| `/model volcengine/kimi-k2.5` | Kimi K2.5 | 日常对话、指令执行 |
+| `/model volcengine/deepseek-v3.2` | DeepSeek V3.2 | 深度推理、逻辑分析 |
+| `/model volcengine/glm-4.7` | GLM 4.7 | 代码生成 |
+| `/model volcengine/doubao-seed-2.0-pro` | 豆包 Seed Pro | 综合任务 |
 
 临时切换只影响当前会话，不改变默认配置。
 
 ### 永久切换（修改默认模型）
 
-编辑配置文件中的 `agents.defaults.model`：
+编辑 `openclaw.json` 中的 `agents.defaults.model` 字段：
 
 ```bash
 nano ~/.openclaw/openclaw.json
-# 修改 "model": "volcengine/kimi-k2.5" 为你想要的默认模型
+# 将 "model": "volcengine/ark-code-latest" 改为你想要的默认模型
+# 例如 "model": "volcengine/kimi-k2.5"
 ```
 
 然后：
@@ -217,31 +327,52 @@ systemctl restart openclaw
 
 ---
 
-## 五、完整配置文件示例
+## 六、完整配置文件示例
 
-以下是一个同时配置了火山引擎 Coding Plan + 海外 GPT-5.4 的完整 `models` 和 `agents` 配置片段：
+以下是一个同时配置了火山引擎 Coding Plan + Hotai 海外代理的完整 `models` 和 `agents` 配置。你也可以参考仓库中的 [openclaw.json.example](../openclaw.json.example) 查看包含所有配置块（gateway、models、agents、plugins、channels、tools）的完整模板。
 
 ```json
 {
     "models": {
-        "mode": "merge",
+        "mode": "replace",
         "providers": {
             "volcengine": {
                 "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
-                "apiKey": "你的火山引擎API Key",
+                "apiKey": "<YOUR_VOLCENGINE_API_KEY>",
                 "api": "openai-completions",
                 "models": [
-                    { "id": "kimi-k2.5", "name": "Kimi K2.5" },
-                    { "id": "deepseek-v3.2", "name": "DeepSeek V3.2" },
-                    { "id": "ark-code-latest", "name": "Ark Code Latest" }
+                    {
+                        "id": "ark-code-latest",
+                        "name": "ark-code-latest",
+                        "contextWindow": 256000,
+                        "maxTokens": 32000,
+                        "input": ["text", "image"]
+                    },
+                    {
+                        "id": "kimi-k2.5",
+                        "name": "kimi-k2.5",
+                        "contextWindow": 256000,
+                        "maxTokens": 32000,
+                        "input": ["text", "image"]
+                    },
+                    {
+                        "id": "deepseek-v3.2",
+                        "name": "deepseek-v3.2",
+                        "contextWindow": 128000,
+                        "maxTokens": 32000,
+                        "input": ["text"]
+                    }
                 ]
             },
             "hotai": {
                 "baseUrl": "https://www.hotaitool.net/v1",
-                "apiKey": "你的海外代理API Key",
+                "apiKey": "<YOUR_HOTAI_API_KEY>",
                 "api": "openai-responses",
                 "models": [
-                    { "id": "gpt-5.4", "name": "GPT-5.4" }
+                    {
+                        "id": "gpt-5.4",
+                        "name": "GPT-5.4"
+                    }
                 ]
             }
         }
@@ -249,13 +380,13 @@ systemctl restart openclaw
     "agents": {
         "defaults": {
             "compaction": { "mode": "safeguard" },
-            "model": "hotai/gpt-5.4",
+            "model": "volcengine/ark-code-latest",
             "memorySearch": {
                 "provider": "openai",
                 "model": "doubao-embedding-vision",
                 "remote": {
                     "baseUrl": "https://ark.cn-beijing.volces.com/api/coding/v3",
-                    "apiKey": "你的火山引擎API Key"
+                    "apiKey": "<YOUR_VOLCENGINE_API_KEY>"
                 }
             }
         }
@@ -265,13 +396,14 @@ systemctl restart openclaw
 
 **策略说明：**
 
-- 默认模型使用 GPT-5.4（推理能力最强，用于复杂任务）
-- 通过 `/model` 命令可随时切换到国产模型（省 Token、低延迟）
-- Embedding 使用火山引擎的 doubao-embedding-vision（Coding Plan 包含）
+- 默认模型使用 `ark-code-latest`（方舟自动调度最优模型，模型升级时无需改配置）
+- 日常对话可切换到 `kimi-k2.5`（响应最稳定）
+- 需要海外旗舰推理能力时，通过 `/model hotai/gpt-5.4` 临时切换
+- Embedding 使用 Coding Plan 包含的 `doubao-embedding-vision`，不额外计费
 
 ---
 
-## 六、补充：在线推理接入点（按量计费）
+## 七、补充：在线推理接入点（按量计费）
 
 如果你需要使用 Coding Plan 套餐外的模型（如特定版本的豆包模型），或者在未订阅 Coding Plan 的情况下使用火山引擎，需要通过「在线推理」方式接入。这种方式需要手动创建接入点。
 
@@ -286,44 +418,50 @@ systemctl restart openclaw
 
 ### 在 OpenClaw 中配置
 
+在 `models.providers` 中新增一个独立的 provider（不要和 Coding Plan 的 `volcengine` 混在一起）：
+
 ```json
 "volcengine-online": {
     "baseUrl": "https://ark.cn-beijing.volces.com/api/v3",
-    "apiKey": "你的火山引擎 API Key",
+    "apiKey": "<YOUR_VOLCENGINE_API_KEY>",
     "api": "openai-completions",
     "models": [
         {
             "id": "ep-20260413045435-2shmq",
-            "name": "Doubao Seed Pro"
+            "name": "Doubao Seed Pro (在线推理)"
         }
     ]
 }
 ```
 
-**注意事项：**
+**与 Coding Plan 配置的关键区别：**
 
-- Base URL 是 `/api/v3`（不是 `/api/coding/v3`）
-- 模型 ID 填的是接入点 ID（`ep-xxxx`），不是模型名
-- 按 Token 计费，无月费上限，务必关注用量
-- 不要和 Coding Plan 的 provider 混在同一个配置块里，建议用不同的 provider 名（如 `volcengine` 用于 Coding Plan，`volcengine-online` 用于在线推理）
+| 字段 | Coding Plan | 在线推理 |
+|------|------------|---------|
+| provider 名 | `volcengine` | `volcengine-online`（建议用不同名称区分） |
+| `baseUrl` | `/api/coding/v3` | `/api/v3` |
+| `models[].id` | 模型名（如 `kimi-k2.5`） | 接入点 ID（如 `ep-2026xxxx-xxxxx`） |
+| 计费 | 包月 | 按 Token 按量 |
+
+> ⚠️ 在线推理按 Token 计费，无月费上限，务必关注用量。
 
 ---
 
-## 七、常见问题排查
+## 八、常见问题排查
 
 | 症状 | 原因 | 解决方案 |
 |------|------|----------|
 | 401 Unauthorized | API Key 错误或未订阅 Coding Plan | 确认 Key 正确且已完成订阅 |
-| 404 model does not support coding plan | 模型名写错 | 使用上方表格中的正确模型 ID |
+| 404 model does not support coding plan | 模型名写错 | 使用第四节表格中的正确模型 ID |
 | 修改配置后不生效 | models.json 未更新 | 删除 `~/.openclaw/agents/main/agent/models.json` 后重启 |
-| `[memory] sync failed` 401 | Embedding 配置缺失或 Key 错误 | 检查 `memorySearch` 配置是否完整 |
+| `[memory] sync failed` 401 | Embedding 配置缺失或 Key 错误 | 检查 `memorySearch` 配置是否完整（参见 4.3 节） |
 | 响应很慢（>60秒） | ark-code-latest 自动调度偶发慢 | 切换为 `kimi-k2.5`，响应更稳定 |
 | 走了按量计费而非 Coding Plan | Base URL 写成了 `/api/v3` | 必须使用 `/api/coding/v3` |
 | API rate limit reached | 超出套餐额度 | 等待次日额度重置，或升级套餐 |
 
 ---
 
-## 八、费用说明
+## 九、费用说明
 
 - **Coding Plan 包月套餐：** 固定月费，超出当日/月度额度后请求会报错，不会产生额外费用
 - **Embedding 模型：** 包含在 Coding Plan 中，不额外计费

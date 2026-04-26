@@ -23,7 +23,9 @@
 |--------|-------|
 | 在云服务器上部署 OpenClaw | [openclaw-infra/](openclaw-infra/) |
 | 让 Agent 接入微信 | [openclaw-im/wechat-clawbot.md](openclaw-im/wechat-clawbot.md) |
-| 让 Agent 接入企业微信（含群聊） | [openclaw-im/wecom-bot.md](openclaw-im/wecom-bot.md) |
+| 让 Agent 接入企业微信 | [openclaw-im/wecom-bot.md](openclaw-im/wecom-bot.md) |
+| 让 Agent 接入飞书 | [openclaw-im/feishu-openclaw.md](openclaw-im/feishu-openclaw.md) |
+| 查看完整的 openclaw.json 配置模板 | [openclaw.json.example](openclaw.json.example) |
 | 配置火山引擎 Coding Plan（国产模型包月） | [openclaw-models/volcengine-coding-plan.md](openclaw-models/volcengine-coding-plan.md) |
 | 配置 Hotai 代理（海外旗舰模型） | [openclaw-models/hotai-api.md](openclaw-models/hotai-api.md) |
 | 排查部署问题 | [openclaw-infra/checklists/troubleshooting.md](openclaw-infra/checklists/troubleshooting.md) |
@@ -33,6 +35,7 @@
 
 ```
 .
+├── openclaw.json.example            # OpenClaw 完整配置模板（脱敏）
 ├── openclaw-infra/                   # 基础设施：部署、守护进程、安全穿透
 │   ├── README.md                     #   OpenClaw 部署指南
 │   ├── configs/
