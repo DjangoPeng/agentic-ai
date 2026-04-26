@@ -30,6 +30,7 @@
 | 配置 Hotai 代理（海外旗舰模型） | [openclaw-models/hotai-api.md](openclaw-models/hotai-api.md) |
 | 排查部署问题 | [openclaw-infra/checklists/troubleshooting.md](openclaw-infra/checklists/troubleshooting.md) |
 | 安全加固检查 | [openclaw-infra/checklists/security-checklist.md](openclaw-infra/checklists/security-checklist.md) |
+| 给 Agent 铸造灵魂（SOUL.md 设计） | [openclaw-soul/](openclaw-soul/) |
 
 ## 目录结构
 
@@ -57,7 +58,16 @@
 │   ├── volcengine-coding-plan.md     #   火山引擎 Coding Plan 购买与配置
 │   └── hotai-api.md                  #   Hotai2API 海外模型代理接入
 │
-├── openclaw-soul/                    # 人格工程：SOUL.md 设计与调教（即将更新）
+├── openclaw-soul/                    # 人格工程：SOUL.md 与 AGENTS.md 设计模板
+│   ├── README.md                     #   SOUL.md 四层建造法 + AGENTS.md 权限矩阵指南
+│   ├── lesson05-lab.md               #   第5节实验手册（可直接跟着操作）
+│   ├── templates/
+│   │   ├── SOUL.md.example           #   通用模板（带注释的四层结构）
+│   │   └── AGENTS.md.example         #   通用模板（权限矩阵 + 记忆管理）
+│   └── examples/
+│       ├── dev-assistant/            #   研发助手完整配置（课程实战版）
+│       ├── biz-assistant/            #   业务管家完整配置
+│       └── devops-agent/             #   DevOps 运维场景（社区案例）
 ├── openclaw-heartbeat/               # 心跳引擎：Heartbeat 定时自动化（即将更新）
 ├── openclaw-skills/                  # 技能开发：Skills 编写与 ClawHub 生态（即将更新）
 ├── openclaw-multi-agent/             # 多 Agent 协作与路由调度（即将更新）
@@ -90,6 +100,17 @@
 |------|------|
 | [hotai-api.md](openclaw-models/hotai-api.md) | Hotai2API：国内直连海外旗舰模型（GPT-5.4 / Claude Opus 4.6） |
 | [volcengine-coding-plan.md](openclaw-models/volcengine-coding-plan.md) | 火山引擎 Coding Plan：国产模型包月，含 Embedding 配置 |
+
+### 📂 [openclaw-soul/](openclaw-soul/) — 人格工程
+
+| 文件 | 说明 |
+|------|------|
+| [README.md](openclaw-soul/README.md) | SOUL.md 四层建造法 + AGENTS.md 权限矩阵设计指南 |
+| [templates/SOUL.md.example](openclaw-soul/templates/SOUL.md.example) | 通用模板：带注释的四层结构（Identity → Style → Rules → Boundaries） |
+| [templates/AGENTS.md.example](openclaw-soul/templates/AGENTS.md.example) | 通用模板：三级权限矩阵 + 记忆管理 + 群聊准则 + 错误处理 |
+| [examples/dev-assistant/](openclaw-soul/examples/dev-assistant/) | 研发助手完整配置（课程实战版，含 SOUL.md + AGENTS.md） |
+| [examples/biz-assistant/](openclaw-soul/examples/biz-assistant/) | 业务管家完整配置 |
+| [examples/devops-agent/](openclaw-soul/examples/devops-agent/) | DevOps 运维场景（社区案例赏析） |
 
 
 ## 部署架构
