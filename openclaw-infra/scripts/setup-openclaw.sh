@@ -71,11 +71,15 @@ echo "npm: $(npm -v)"
 # 安装 OpenClaw
 echo ""
 echo "安装 OpenClaw..."
-npm install -g openclaw@latest
+
+npm install -g "openclaw@2026.4.22"
 
 # 生成 shell 补全（避免 SSH 登录时报错）
 mkdir -p /root/.openclaw/completions
 openclaw completion > /root/.openclaw/completions/openclaw.bash 2>/dev/null || true
+
+# 如有遇到 因为新版本导致的错误`bash: ((: ! $+functions[compdef] : syntax error: operand expected (error token is "$+functions[compdef] ")`
+# 请使用 openclaw completion --shell bash > /root/.openclaw/completions/openclaw.bash 替代
 
 echo ""
 echo "✅ Step 2 完成：Node.js $(node -v) + OpenClaw 已安装"
@@ -301,6 +305,8 @@ echo "5.5  获取 Dashboard 访问地址："
 echo "     openclaw dashboard --no-open"
 echo "     # 将输出 URL 中的 127.0.0.1 替换为你的 Tailscale 域名"
 echo "     # 例如：https://你的设备名.tailnet.ts.net/#token=你的令牌"
+echo "     # 如 openclaw --version 版本 > 2026.4.22 openclaw dashboard --no-open 不会输出token, 需要自己手动拼接 "
+echo "     # 获取token方式: cat /root/.openclaw/openclaw.json|grep -v tokens|grep -v mode|grep token "
 echo ""
 echo "5.6  首次浏览器访问需要设备配对："
 echo "     # 浏览器点 Connect 后如果提示 pairing required，在服务器执行："
