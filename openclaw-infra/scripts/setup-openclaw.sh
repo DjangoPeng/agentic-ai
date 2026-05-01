@@ -256,8 +256,40 @@ else
     fi
 fi
 
+# ==========================================================
+# Tailscale DNS 接管问题修复
+# ==========================================================
+# 问题：Tailscale 默认开启 MagicDNS 接管，会导致 DNS 解析超时或失败
+# 影响：证书获取失败、网络爬虫无法访问、早报数据不完整
+# 修复：关闭 Tailscale DNS 接管，使用系统 DNS
+# ==========================================================
+
 echo ""
-echo "✅ Step 4 完成：Tailscale 已安装"
+echo "正在关闭 Tailscale DNS 接管..."
+
+# 先关闭再重新启动，确保 DNS 设置生效
+tailscale down 2>/dev/null || true
+tailscale up --accept-dns=false --accept-routes=false 2>/dev/null || true
+
+# 验证 DNS 配置
+echo ""
+echo "DNS 配置验证："
+echo "   resolv.conf 内容："
+cat /etc/resolv.conf | head -5
+echo ""
+echo "   DNS 解析测试（google.com）："
+if nslookup google.com 2>&1 | grep -q 'Address'; then
+    echo "   ✅ DNS 解析正常"
+else
+    echo "   ⚠️  DNS 解析可能有问题，请手动检查"
+fi
+
+echo ""
+echo "ℹ️  说明：已关闭 Tailscale DNS 接管，使用系统原生 DNS"
+echo "   这样可以避免 MagicDNS 导致的解析超时和网络访问失败"
+
+echo ""
+echo "✅ Step 4 完成：Tailscale 已安装并配置 DNS"
 echo ""
 
 # ==========================================================
