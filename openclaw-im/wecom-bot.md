@@ -62,7 +62,8 @@
 SSH 登录到 OpenClaw 服务器，执行：
 
 ```bash
-npx -y @wecom/wecom-openclaw-cli install
+# 教学需要, 锁定版本, 如需要更新请移除锁定wecom-openclaw-plugin版本 --version 2026.4.23
+npx  -y @wecom/wecom-openclaw-cli install  --version 2026.4.23
 ```
 
 安装过程中按提示输入 Step 1 中获取的 **Bot ID** 和 **Secret**。
@@ -71,7 +72,8 @@ npx -y @wecom/wecom-openclaw-cli install
 
 ```bash
 # 方式 A：通过 OpenClaw 插件命令安装
-openclaw plugins install @wecom/wecom-openclaw-plugin
+## 教学需要, 锁定版本, 如需要更新请移除锁定 版本 `@2026.4.23` 标记 -> openclaw plugins install @wecom/wecom-openclaw-plugin
+openclaw plugins install @wecom/wecom-openclaw-plugin@2026.4.23
 
 # 然后手动添加通道
 openclaw channels add
