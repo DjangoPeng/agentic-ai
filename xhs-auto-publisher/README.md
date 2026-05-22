@@ -74,19 +74,19 @@ runtime/lobster-notify/
 建议放在：
 
 ```bash
-/root/projects/xhs-auto-publisher
+~/projects/xhs-auto-publisher
 ```
 
 ### 2. 安装系统依赖
 
 ```bash
-bash /root/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh
+bash ~/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh
 ```
 
 ### 3. 初始化项目环境
 
 ```bash
-cd /root/projects/xhs-auto-publisher
+cd ~/projects/xhs-auto-publisher
 bash deploy/bootstrap_project.sh
 ```
 
@@ -106,7 +106,7 @@ LOGIN_TIMEOUT=300
 ### 5. 手动执行一次
 
 ```bash
-cd /root/projects/xhs-auto-publisher
+cd ~/projects/xhs-auto-publisher
 bash deploy/run_with_xvfb.sh
 ```
 

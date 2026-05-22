@@ -14,7 +14,7 @@
 
 我们要部署的是独立云端版：
 
-- 项目目录：`/root/projects/xhs-auto-publisher`
+- 项目目录：`~/projects/xhs-auto-publisher`
 - 运行方式：Playwright + Chromium + `xvfb`
 - 登录方式：人工扫码接管
 - 通知方式：龙虾代发飞书群图片消息
@@ -64,11 +64,11 @@
 ## 4. 推荐目录结构
 
 ```text
-/root/projects/xhs-auto-publisher/
-/root/projects/xhs-auto-publisher/runtime/
-/root/projects/xhs-auto-publisher/runtime/browser-profile/
-/root/projects/xhs-auto-publisher/runtime/runs/
-/root/projects/xhs-auto-publisher/runtime/lobster-notify/
+~/projects/xhs-auto-publisher/
+~/projects/xhs-auto-publisher/runtime/
+~/projects/xhs-auto-publisher/runtime/browser-profile/
+~/projects/xhs-auto-publisher/runtime/runs/
+~/projects/xhs-auto-publisher/runtime/lobster-notify/
 ```
 
 说明：
@@ -127,7 +127,7 @@
 建议统一放这里：
 
 ```bash
-/root/projects/xhs-auto-publisher
+~/projects/xhs-auto-publisher
 ```
 
 ### 第二步：安装系统依赖
@@ -135,7 +135,7 @@
 执行：
 
 ```bash
-bash /root/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh
+bash ~/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh
 ```
 
 ### 第三步：初始化项目环境
@@ -143,7 +143,7 @@ bash /root/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh
 执行：
 
 ```bash
-cd /root/projects/xhs-auto-publisher
+cd ~/projects/xhs-auto-publisher
 bash deploy/bootstrap_project.sh
 ```
 
@@ -152,7 +152,7 @@ bash deploy/bootstrap_project.sh
 执行：
 
 ```bash
-cd /root/projects/xhs-auto-publisher
+cd ~/projects/xhs-auto-publisher
 cp deploy/env.example .env
 ```
 
@@ -174,7 +174,7 @@ LOGIN_TIMEOUT=300
 执行：
 
 ```bash
-cd /root/projects/xhs-auto-publisher
+cd ~/projects/xhs-auto-publisher
 bash deploy/run_with_xvfb.sh
 ```
 
@@ -195,7 +195,7 @@ bash deploy/run_with_xvfb.sh
 确认手动执行没问题后，再启用 systemd：
 
 ```bash
-cp /root/projects/xhs-auto-publisher/deploy/systemd/xhs-auto-publisher-cloud.service /etc/systemd/system/
+cp ~/projects/xhs-auto-publisher/deploy/systemd/xhs-auto-publisher-cloud.service /etc/systemd/system/
 systemctl daemon-reload
 systemctl enable xhs-auto-publisher-cloud.service
 ```

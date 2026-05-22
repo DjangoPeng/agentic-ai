@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ROOT="/root/projects/xhs-auto-publisher"
+PROJECT_ROOT="${PROJECT_ROOT:-${HOME}/projects/xhs-auto-publisher}"
 PYTHON_BIN="${PROJECT_ROOT}/.venv/bin/python"
 CONTENT_PATH="${1:-${PROJECT_ROOT}/examples/openclaw_business_content.json}"
 MODE="${MODE:-publish}"

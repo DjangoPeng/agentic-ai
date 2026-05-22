@@ -52,20 +52,20 @@ https://github.com/DjangoPeng/agentic-ai/tree/main/xhs-auto-publisher
 目标机器信息：
 - Ubuntu 24.04.4 LTS
 - root 用户
-- 项目部署目录：/root/projects/xhs-auto-publisher
+- 项目部署目录：~/projects/xhs-auto-publisher
 
 部署要求：
-1. 从 GitHub 拉取仓库到 `/root/projects/xhs-auto-publisher`
+1. 从 GitHub 拉取仓库到 `~/projects/xhs-auto-publisher`
 2. 执行项目自带的系统依赖安装脚本：
-   `bash /root/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh`
+   `bash ~/projects/xhs-auto-publisher/deploy/install_system_ubuntu.sh`
 3. 执行项目自带的初始化脚本：
-   `cd /root/projects/xhs-auto-publisher && bash deploy/bootstrap_project.sh`
+   `cd ~/projects/xhs-auto-publisher && bash deploy/bootstrap_project.sh`
 4. 复制环境变量模板：
-   `cd /root/projects/xhs-auto-publisher && cp deploy/env.example .env`
+   `cd ~/projects/xhs-auto-publisher && cp deploy/env.example .env`
 5. 这次先不要改复杂配置，不需要 nginx，不需要 `XHS_PUBLIC_RUNTIME_BASE_URL`
 6. 这次只做“可运行性验证”，不要真的发布内容；把 `.env` 里的 `MODE` 设为 `draft`
 7. 执行一次手动测试：
-   `cd /root/projects/xhs-auto-publisher && bash deploy/run_with_xvfb.sh`
+   `cd ~/projects/xhs-auto-publisher && bash deploy/run_with_xvfb.sh`
 8. 运行后检查以下文件是否生成：
    - `runtime/runs/<run_id>/screenshots/login_qr.png`
    - `runtime/lobster-notify/<run_id>/login_qr.payload.json`
@@ -87,7 +87,7 @@ https://github.com/DjangoPeng/agentic-ai/tree/main/xhs-auto-publisher
 5. 当前卡在哪一步
 
 验收标准：
-- 项目目录已正确部署到 `/root/projects/xhs-auto-publisher`
+- 项目目录已正确部署到 `~/projects/xhs-auto-publisher`
 - `.venv` 创建成功
 - Playwright Chromium 安装成功
 - 能成功跑起测试
@@ -105,7 +105,7 @@ https://github.com/DjangoPeng/agentic-ai/tree/main/xhs-auto-publisher
 
 龙虾回报时，重点检查：
 
-1. 仓库是否在 `/root/projects/xhs-auto-publisher`
+1. 仓库是否在 `~/projects/xhs-auto-publisher`
 2. `.venv` 是否创建成功
 3. Playwright Chromium 是否安装成功
 4. `.env` 中是否是 `MODE=draft`
@@ -127,10 +127,10 @@ run_id:
 <run_id>
 
 二维码图片路径:
-/root/projects/xhs-auto-publisher/runtime/runs/<run_id>/screenshots/login_qr.png
+~/projects/xhs-auto-publisher/runtime/runs/<run_id>/screenshots/login_qr.png
 
 payload 文件路径:
-/root/projects/xhs-auto-publisher/runtime/lobster-notify/<run_id>/login_qr.payload.json
+~/projects/xhs-auto-publisher/runtime/lobster-notify/<run_id>/login_qr.payload.json
 ```
 
 如果两个文件都存在，本实验通过。
@@ -168,7 +168,7 @@ payload 文件路径:
 
 完成本实验时，应满足以下条件：
 
-- 项目目录已正确部署到 `/root/projects/xhs-auto-publisher`
+- 项目目录已正确部署到 `~/projects/xhs-auto-publisher`
 - `.venv` 创建成功
 - Playwright Chromium 安装成功
 - 能成功跑起测试

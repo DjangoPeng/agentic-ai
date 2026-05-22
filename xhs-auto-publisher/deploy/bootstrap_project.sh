@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ROOT="${PROJECT_ROOT:-/root/projects/xhs-auto-publisher}"
+PROJECT_ROOT="${PROJECT_ROOT:-${HOME}/projects/xhs-auto-publisher}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 echo "[project] preparing project directories"

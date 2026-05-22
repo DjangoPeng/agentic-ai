@@ -6,9 +6,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/projects/xhs-auto-publisher
-EnvironmentFile=-/root/projects/xhs-auto-publisher/.env
-ExecStart=/root/projects/xhs-auto-publisher/deploy/run_with_xvfb.sh /root/projects/xhs-auto-publisher/examples/openclaw_business_content.json
+WorkingDirectory=%h/projects/xhs-auto-publisher
+EnvironmentFile=-%h/projects/xhs-auto-publisher/.env
+ExecStart=%h/projects/xhs-auto-publisher/deploy/run_with_xvfb.sh %h/projects/xhs-auto-publisher/examples/openclaw_business_content.json
 Restart=no
 TimeoutStartSec=900
 StandardOutput=journal
