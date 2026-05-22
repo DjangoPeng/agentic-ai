@@ -94,11 +94,12 @@ https://github.com/DjangoPeng/agentic-ai/tree/main/xhs-auto-publisher
 - 成功生成 `login_qr.png`
 - 成功生成 `login_qr.payload.json`
 
-如果测试跑到需要扫码登录这一步，就停下来，把：
-- run_id
-- 二维码图片路径
-- payload 文件路径
-回给我，等待我下一步处理。
+如果测试跑到需要扫码登录这一步，执行以下操作：
+1. 读取 ~/projects/xhs-auto-publisher/runtime/lobster-notify/<run_id>/login_qr.payload.json
+2. 取出 delivery.path 字段对应的图片文件
+3. 把那张二维码图片直接发到飞书群（图片消息，不是路径文字）
+4. 把 delivery.caption_lines 的内容作为说明文字一并发出
+5. 等待用户确认扫码完成后再继续执行
 ```
 
 ### 确认要点
