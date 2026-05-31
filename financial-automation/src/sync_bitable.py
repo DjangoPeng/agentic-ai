@@ -431,18 +431,18 @@ def _map_validation_status(value: Any) -> str:
     return VALIDATION_STATUS_LABELS.get(raw, raw or "⚪ 未知")
 
 
-def _map_review_flag(value: Any) -> str:
-    return "是" if bool(value) else "否"
+def _map_review_flag(value: Any) -> bool:
+    return bool(value)
 
 
-def _normalize_tax_rate(value: Any) -> float | Any:
+def _normalize_tax_rate(value: Any) -> str | Any:
     if isinstance(value, str):
         raw = value.strip()
         if raw.endswith("%"):
-            try:
-                return float(raw[:-1]) / 100.0
-            except ValueError:
-                return value
+            return raw
+        return raw
+    if isinstance(value, (int, float)):
+        return f"{value:.0%}"
     return value
 
 
