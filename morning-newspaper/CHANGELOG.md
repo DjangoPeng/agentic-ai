@@ -1,5 +1,62 @@
 # Changelog
 
+## 2026-06-09 Tavily 直连、来源多样性与流程稳定性修复
+
+### Tavily REST API 直连
+
+- `src/morning_newspaper/collectors/tavily.py`
+  - 新增 `execute_tavily_plan()` 函数，直接调用 Tavily REST API（POST `https://api.tavily.com/search`），不再依赖外部 OpenClaw Skill 两步式执行
+  - source_id 统一为 `tavily_search`，source_type 统一为 `tavily_api`
+- `src/morning_newspaper/collectors/orchestrator.py`
+  - collect 阶段自动调用 `execute_tavily_plan()`，有 API Key 时直接执行搜索
+- `scripts/collect_raw.py`
+  - 入口加载 `.env` 文件确保 `TAVILY_API_KEY` 可用
+- `config/sources.yaml`
+  - GitHub / HN 的 `max_items` 从 4 调高至 6，Tavily `max_items_per_topic` 从 5 降至 3，平衡各来源初始配额
+
+### 来源多样性硬约束
+
+- `scripts/apply_top10_ranking.py`
+  - 新增 `_enforce_source_diversity()`：Tavily 最多占 Top10 的 50%，GitHub 和 HN 各至少 2 条
+  - 砍掉超额 Tavily 后自动从已成稿候选中补入 GitHub/HN 条目（优先选 AI 相关标题）
+  - 修复补位后总数不足 10 条的问题：加入 shortfall 填充逻辑，从剩余候选池补满
+
+### 流程稳定性
+
+- `scripts/apply_title_shortlist.py`
+  - 修复致命 bug：`selected_map` 未定义导致 NameError 崩溃，补上 `ranked_titles` → `{title: rank}` 字典构建
+  - mtime 校验：结果文件必须比输入文件新，否则拒绝执行
+- `scripts/apply_draft_results.py`
+  - mtime 校验：结果文件必须比输入文件新
+- `scripts/apply_top10_ranking.py`
+  - mtime 校验：结果文件必须比输入文件新
+
+### 统一 runtime 目录
+
+- `scripts/run_daily_pipeline.py`
+  - 移除 `--results-dir` 参数和所有 `_validate_*` 函数
+  - 所有文件统一读写 `runtime/` 目录，去掉 `runtime_results/` 依赖
+- `scripts/cron_generate_morning_newspaper.py`
+  - 移除 `--results-dir runtime_results` 参数
+
+### Dashboard 时区修复
+
+- `src/morning_newspaper/dashboard.py`
+  - 更新时间从 UTC ISO 格式转为北京时间显示（`2026-06-09 14:03 CST`）
+
+### SKILL.md 重写
+
+- `skills/morning-newspaper-assistant-skill/SKILL.md`
+  - 主流程从"直接执行 `run_daily_pipeline.py`"改为三阶段逐步执行 + 3 个 LLM 关口
+  - 每个关口明确标注：必须读取当前 prompt、基于本轮输入生成结果、不能复用旧文件
+  - 新增"防串轮次机制"说明 mtime 校验规则
+
+### 实验手册微调
+
+- `lesson14-lab.md`
+  - Step 4 移除 `serve_dashboard_8510.sh` 执行（第 5 步才开放端口）
+  - Step 9/10 将建议消息格式移入 prompt 块内
+
 ## 2026-06-08 早报稳定性修复与命名清理
 
 ### 流程一致性与结果隔离
