@@ -245,7 +245,22 @@ MORNING_NEWSPAPER_ROOT=~/projects/agentic-ai/morning-newspaper
 
 ---
 
-## 8. 设置每日定时任务（发给龙虾）
+## 8. 设置每日定时任务
+
+### 8.1 创建飞书日报群（手动）
+
+07:58 的群回执任务需要一个专属飞书群来接收消息。
+
+1. 在飞书中新建一个群，命名如"AI 日报自动推送"
+2. 将龙虾（OpenClaw）拉入该群
+3. 在群内发一条消息，让龙虾回复，确认龙虾在群内能正常响应
+4. 记下该群的 Session ID（可以让龙虾告诉你当前群的 Session ID）
+
+> 这个群专门用于接收每日自动生成的早报回执和正式摘要，与日常和龙虾的 1:1 对话分开，避免定时任务干扰正常聊天。
+
+### 8.2 配置定时任务（发给龙虾）
+
+> **⚠️ 发送前把 `<群 Session ID>` 替换为上一步获取的真实 Session ID。**
 
 ```text
 请为 morning-newspaper 设置三个每日定时任务：
@@ -255,11 +270,11 @@ MORNING_NEWSPAPER_ROOT=~/projects/agentic-ai/morning-newspaper
    - 完成后写 runtime/cron_status.json 和 runtime/cron_group_message.txt
    - 不发送消息，只负责生成
 
-2. 每天北京时间 07:58，向专属飞书日报群发送执行回执
+2. 每天北京时间 07:58，向飞书日报群（Session ID: <群 Session ID>）发送执行回执
    - 读取 runtime/cron_group_message.txt
-   - 发送到飞书日报群，确保群内稳定收到消息
+   - 发送到指定群，确保群内稳定收到消息
 
-3. 每天北京时间 08:05，发送正式早报摘要或失败告警
+3. 每天北京时间 08:05，向同一个飞书日报群（Session ID: <群 Session ID>）发送正式早报摘要或失败告警
    - 读取 runtime/cron_status.json
    - 成功：发送前三条标题摘要 + 页面链接
    - 失败：发送失败步骤 + 错误摘要
