@@ -1,0 +1,130 @@
+name: Multi-File Refactor Tests
+
+on:
+  push:
+    paths:
+      - 'claude-code/multi-file-refactor/**'
+  pull_request:
+    paths:
+      - 'claude-code/multi-file-refactor/**'
+
+jobs:
+  test-financial-automation:
+    name: Financial Automation Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: claude-code/multi-file-refactor/financial-automation
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create venv and install dependencies
+        run: |
+          python -m venv .venv
+          source .venv/bin/activate
+          pip install -r requirements.txt
+
+      - name: Run smoke tests
+        run: |
+          source .venv/bin/activate
+          python -m unittest tests.test_smoke -v
+
+  test-crm-assistant:
+    name: CRM Assistant Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: claude-code/multi-file-refactor/CRM-Assistant
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create venv
+        run: python -m venv .venv
+
+      - name: Run merge policy tests
+        run: |
+          source .venv/bin/activate
+          python scripts/crm_assistant.py run-merge-policy-tests
+
+  scan-secrets:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: claude-code/multi-file-refactor
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for hardcoded Feishu secrets
+        run: |
+          echo "🔍 Scanning for hardcoded Feishu credentials..."
+
+          # Patterns to detect
+          PATTERNS=(
+            'cli_[a-zA-Z0-9]{12}'          # Feishu app_id
+            't-[a-zA-Z0-9_-]{40,}'          # Tenant access token
+            'u-[a-zA-Z0-9_-]{40,}'          # User access token
+            'basc[a-zA-Z0-9]{15,}'          # Bitable app token
+          )
+
+          FOUND=0
+          for PATTERN in "${PATTERNS[@]}"; do
+            MATCHES=$(grep -rE "$PATTERN" --include='*.py' --include='*.json' --include='*.yaml' --include='*.yml' . 2>/dev/null || true)
+            if [ -n "$MATCHES" ]; then
+              echo "❌ Found potential secrets matching pattern: $PATTERN"
+              echo "$MATCHES"
+              FOUND=1
+            fi
+          done
+
+          # Also check for Feishu API misuse (bypassing shared client)
+          echo "🔍 Scanning for Feishu API hardcoding (should use FeishuClient)..."
+
+          ALLOWED_FILES=(
+            './common/feishu/client.py'
+            './common/feishu/http.py'
+            './common/feishu/auth.py'
+          )
+
+          API_MATCHES=$(grep -rE 'open\.feishu\.cn|Bearer\s' --include='*.py' . 2>/dev/null || true)
+
+          while IFS= read -r line; do
+            if [ -z "$line" ]; then
+              continue
+            fi
+            FILE=$(echo "$line" | cut -d: -f1)
+            # Skip allowed files
+            SKIP=0
+            for ALLOWED in "${ALLOWED_FILES[@]}"; do
+              if [ "$FILE" = "$ALLOWED" ]; then
+                SKIP=1
+                break
+              fi
+            done
+            if [ $SKIP -eq 0 ]; then
+              echo "❌ Found Feishu API hardcoding outside shared client:"
+              echo "   $line"
+              FOUND=1
+            fi
+          done <<< "$API_MATCHES"
+
+          if [ $FOUND -eq 0 ]; then
+            echo "✅ No hardcoded secrets or API bypasses found"
+            exit 0
+          else
+            echo "❌ Found issues - please fix before merging"
+            exit 1
+          fi
