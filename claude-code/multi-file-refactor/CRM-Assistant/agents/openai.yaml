@@ -1,0 +1,4 @@
+﻿interface:
+  display_name: "CRM Assistant"
+  short_description: "将会议转录文本转换为 CRM 结构化洞察与飞书表格更新数据。"
+  default_prompt: "使用 $crm-assistant 将会议 transcript 与客户 context 转换为结构化 CRM 输出，以及可直接写入飞书两张表的数据。"

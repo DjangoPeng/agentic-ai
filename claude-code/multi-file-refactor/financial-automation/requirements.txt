@@ -1,0 +1,4 @@
+PyMuPDF
+pypdf
+rapidocr-onnxruntime
+PyYAML

@@ -24,7 +24,6 @@ jobs:
       - name: Create venv and install dependencies
         run: |
           cd claude-code/multi-file-refactor/financial-automation
-          pwd && ls -la
           python -m venv .venv
           source .venv/bin/activate
           pip install -r requirements.txt

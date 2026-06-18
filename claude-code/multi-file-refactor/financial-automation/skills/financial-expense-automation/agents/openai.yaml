@@ -1,0 +1,7 @@
+interface:
+  display_name: "Expense Automation"
+  short_description: "Extract invoice and rail-ticket expense data."
+  default_prompt: "Use $financial-expense-automation to process uploaded expense receipts and return structured results."
+
+policy:
+  allow_implicit_invocation: true

@@ -214,10 +214,7 @@ __marimo__/
 # Morning Newspaper runtime result files
 morning-newspaper/runtime_results/
 
-# 第 17 节 multi-file-refactor 工作区产物（由 setup.sh + 课上重构生成；不入库，否则学生 clone 就直接看到答案与快照）
-claude-code/multi-file-refactor/common/
-claude-code/multi-file-refactor/financial-automation/
-claude-code/multi-file-refactor/CRM-Assistant/
-
-# Ch1 演示「为 app 生成 CLAUDE.md」的现场产物（课上由 Claude Code 生成，不入库以免剧透）
+# 第 17 节：重构工作区（common/ 包 + 两个快照）作为参考实现入库，
+# 这样 Ch3 的 GitHub CI 能对真代码跑测试（详见 multi-file-refactor/README.md）。
+# 仅 Ch1 演示「为 app 生成 CLAUDE.md」的现场产物不入库，以免剧透该 demo：
 financial-automation/CLAUDE.md

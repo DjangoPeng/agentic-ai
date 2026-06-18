@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+"""
+Pre-commit hook to enforce FeishuClient best practices.
+
+Blocks commits that:
+1. Hardcode open.feishu.cn directly (should use shared FeishuClient)
+2. Manually construct Feishu auth tokens/bearer headers
+3. Import Feishu API from non-shared locations
+
+Only checks files under claude-code/multi-file-refactor/ directory.
+"""
+
+import re
+import sys
+import subprocess
+from pathlib import Path
+
+# Patterns that indicate bypassing FeishuClient
+BAD_PATTERNS = [
+    # Direct Feishu API call construction (not just endpoint as config param)
+    (
+        r'https?://open\.feishu\.cn/open-apis/',
+        "❌ 发现硬编码的飞书 API 调用路径",
+        "请使用 FeishuClient 方法，不要自己拼完整 API URL"
+    ),
+    # Manual Bearer token construction
+    (
+        r'["\']Authorization["\']:\s*["\']Bearer\s',
+        "❌ 发现手动拼接的飞书 Authorization header",
+        "请使用 FeishuClient 自动处理认证，不要自己拼 token"
+    ),
+    # Manual tenant access token API call (not function name/import)
+    (
+        r'auth/v3/tenant_access_token/internal',
+        "❌ 发现手动调用飞书 Auth API 获取 token",
+        "请使用 FeishuClient(app_id=..., app_secret=...)，不要自己调 auth API"
+    ),
+    # HTTP helpers re-implementation outside shared dir
+    (
+        r'def\s+(post_json|post_multipart|http_json_request)',
+        "❌ 发现重复实现 HTTP 工具函数",
+        "请使用 common/feishu/http.py 中的共享函数，不要重复造轮子"
+    ),
+]
+
+# Files that are allowed to contain these patterns (the shared client itself)
+ALLOWED_FILES = {
+    'common/feishu/__init__.py',
+    'common/feishu/client.py',
+    'common/feishu/http.py',
+    'common/feishu/auth.py',
+    'common/feishu/bitable.py',
+    'financial-automation/src/bitable_attachment_uploader.py',
+    'financial-automation/src/bitable_session_writer.py',
+    'financial-automation/src/sync_bitable.py',
+}
+
+def get_staged_files() -> list[Path]:
+    """Get list of staged files relative to git root."""
+    result = subprocess.run(
+        ['git', 'diff', '--cached', '--name-only', '--diff-filter=ACM'],
+        capture_output=True,
+        text=True,
+    )
+    return [Path(f.strip()) for f in result.stdout.splitlines() if f.strip()]
+
+def get_file_content(path: Path) -> str:
+    """Get staged content of a file (not working copy)."""
+    result = subprocess.run(
+        ['git', 'show', f':{path}'],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parents[3]  # common/git-hooks/pre-commit → repo root
+    target_prefix = Path('claude-code/multi-file-refactor')
+
+    staged_files = get_staged_files()
+
+    violations = []
+
+    for file_path in staged_files:
+        # Only check files under multi-file-refactor
+        try:
+            relative_to_target = file_path.relative_to(target_prefix)
+        except ValueError:
+            continue
+
+        # Skip allowed files (the shared client itself)
+        if str(relative_to_target) in ALLOWED_FILES:
+            continue
+
+        # Only check Python files
+        if file_path.suffix != '.py':
+            continue
+
+        content = get_file_content(file_path)
+
+        for pattern, message, hint in BAD_PATTERNS:
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                # Calculate line number
+                line_no = content.count('\n', 0, match.start()) + 1
+                violations.append({
+                    'file': str(file_path),
+                    'line': line_no,
+                    'match': match.group(0),
+                    'message': message,
+                    'hint': hint,
+                })
+
+    if violations:
+        print("=" * 70)
+        print("❌ Pre-commit 检查失败：发现飞书 API 硬编码违规")
+        print("=" * 70)
+        print()
+        for v in violations:
+            print(f"{v['file']}:{v['line']}")
+            print(f"  {v['message']}")
+            print(f"  匹配内容: {repr(v['match'])}")
+            print(f"  💡 {v['hint']}")
+            print()
+        print("=" * 70)
+        print("✅ 正确做法：")
+        print("   import sys")
+        print("   sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'common'))")
+        print("   from feishu.client import FeishuClient")
+        print()
+        print("   client = FeishuClient(app_id='...', app_secret='...')")
+        print("   client.bitable_list_tables(app_token)")
+        print("=" * 70)
+        return 1
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

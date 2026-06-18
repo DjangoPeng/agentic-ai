@@ -1,0 +1,3 @@
+# CRM Assistant 当前 Python CLI 仅依赖标准库。
+# 保留此文件是为了便于云服务器/自动化部署流程统一执行：
+#   pip install -r requirements.txt

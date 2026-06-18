@@ -1,0 +1,18 @@
+# 敏感文件
+.env.local
+.env
+
+# 运行时产物
+runtime/oauth/
+runtime/jobs/
+runtime/output/
+runtime/inbox/
+
+# Python 虚拟环境
+.venv/
+__pycache__/
+*.pyc
+
+# IDE
+.idea/
+.vscode/

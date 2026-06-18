@@ -1,0 +1,71 @@
+app:
+  name: financial-automation
+  env: dev
+  timezone: Asia/Shanghai
+
+paths:
+  # Default local batch input directory.
+  input_dir: runtime/inbox
+  # Default output root for one run (can be overridden by runner/job mode).
+  output_dir: runtime/output
+  # Root for temporary/runtime artifacts (including webhook jobs).
+  runtime_dir: runtime
+
+ocr:
+  # rapidocr | api
+  engine: rapidocr
+
+  pdf:
+    # Set to absolute path if needed. Empty means try system PATH.
+    pdftotext_path: ""
+
+  rapidocr:
+    enabled: true
+    model_root_dir: runtime/models/rapidocr
+
+  api:
+    enabled: false
+    # Example: https://example.com/layout-parsing
+    url: ""
+    # Keep token in env var, do not hardcode secrets.
+    token_env: OCR_API_TOKEN
+    timeout_seconds: 60
+
+extract:
+  schema_version: v1
+  default_currency: CNY
+  keep_raw_text: true
+
+validate:
+  rules_file: config/rules.yaml
+
+sync:
+  bitable:
+    enabled: true
+    dry_run: false
+    endpoint: https://open.feishu.cn
+    batch_size: 200
+    include_attachments: true
+    user_token_file: runtime/oauth/feishu_user_token.json
+    # Keep credentials/IDs in env vars.
+    app_id_env: FEISHU_APP_ID
+    app_secret_env: FEISHU_APP_SECRET
+    app_token_env: FEISHU_BITABLE_APP_TOKEN
+    transport_table_id_env: FEISHU_BITABLE_TRANSPORT_TABLE
+    expense_table_id_env: FEISHU_BITABLE_EXPENSE_TABLE
+
+webhook:
+  enabled: false
+  host: 0.0.0.0
+  port: 8008
+  route: /webhook/feishu
+  health_route: /healthz
+  # If true, webhook mode calls bitable sync after each message job.
+  auto_sync_bitable: true
+  # If true, each message runs in isolated workspace.
+  single_message_workspace: true
+
+logging:
+  level: INFO
+  summary_file: run_summary.json
+  save_intermediate_files: true

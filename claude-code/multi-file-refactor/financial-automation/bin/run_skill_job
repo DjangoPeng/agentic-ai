@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+venv_python="$repo_root/.venv/bin/python"
+script="$repo_root/scripts/run_skill_job.py"
+env_file="$repo_root/.env"
+
+if [[ -f "$env_file" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$env_file"
+  set +a
+fi
+
+if [[ ! -x "$venv_python" ]]; then
+  echo "Missing virtualenv python: $venv_python" >&2
+  echo "Create it first, for example:" >&2
+  echo "  python3 -m venv $repo_root/.venv" >&2
+  exit 1
+fi
+
+exec "$venv_python" "$script" "$@"

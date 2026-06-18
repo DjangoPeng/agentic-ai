@@ -1,0 +1,74 @@
+schema_version: v1
+
+required_fields:
+  - invoice_number
+  - issue_date
+  - amount
+  - invoice_type
+
+confidence:
+  minimum_confidence: 0.75
+  # If true, records below minimum_confidence are sent to review queue.
+  low_confidence_requires_review: true
+
+expense_type_rules:
+  conference_fee:
+    required_fields:
+      - buyer_name
+      - vendor
+    max_amount: 10000
+  accommodation_fee:
+    required_fields:
+      - buyer_name
+      - vendor
+    max_amount: 3000
+  transportation_fee:
+    required_fields:
+      - buyer_name
+      - route
+      - transport_number
+      - from_station
+      - to_station
+      - travel_date
+      - passenger_name
+    max_amount: 2000
+  unknown:
+    required_fields:
+      - buyer_name
+
+consistency:
+  check_invoice_total: true
+  check_line_items: true
+  amount_tolerance: 0.05
+
+compliance:
+  severity_map:
+    missing_required_field: error
+    amount_exceeds_limit: warning
+    low_confidence: warning
+    duplicate_invoice_number: error
+    unknown_expense_type: warning
+    line_item_mismatch: warning
+    invoice_total_mismatch: warning
+  # Optional hard checks.
+  hard_checks:
+    block_on_error: true
+    allow_warning_auto_pass: false
+
+review_policy:
+  image_ocr_requires_review: false
+  missing_required_field_requires_review: true
+  amount_exceeds_limit_requires_review: true
+  duplicate_invoice_requires_review: true
+  consistency_requires_review: true
+
+dedup:
+  # invoice_number_first | composite_fallback
+  strategy: invoice_number_first
+  # Used when invoice number is missing:
+  # issue_date + amount + vendor + source_file_name
+  fallback_fields:
+    - issue_date
+    - amount
+    - vendor
+    - source_file_name
