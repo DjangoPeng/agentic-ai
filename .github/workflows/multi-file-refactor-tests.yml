@@ -92,7 +92,7 @@ jobs:
           echo "🔍 Scanning for Feishu API hardcoding (should use FeishuClient)..."
 
           # ONLY THESE PATTERNS - very specific to bypass behavior
-          API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant_access_token/internal|Authorization.*Bearer' --include='*.py' . 2>/dev/null || true)
+          API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant_access_token/internal|Authorization.*Bearer' --include='*.py' . 2>/dev/null | grep -vE '^./common/feishu/' || true)
 
           if [ -n "$API_MATCHES" ]; then
             echo "❌ Found Feishu API hardcoding outside shared client:"
