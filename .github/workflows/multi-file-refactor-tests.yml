@@ -109,14 +109,19 @@ jobs:
 
           API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant|Bearer\s' --include='*.py' . 2>/dev/null || true)
 
+          echo "DEBUG: API_MATCHES=$API_MATCHES"
+          echo "DEBUG: ALLOWED_FILES=${ALLOWED_FILES[*]}"
+
           while IFS= read -r line; do
             if [ -z "$line" ]; then
               continue
             fi
             FILE=$(echo "$line" | cut -d: -f1)
+            echo "DEBUG: Checking file=$FILE"
             # Skip allowed files
             SKIP=0
             for ALLOWED in "${ALLOWED_FILES[@]}"; do
+              echo "DEBUG:   vs $ALLOWED"
               if [ "$FILE" = "$ALLOWED" ]; then
                 SKIP=1
                 break
