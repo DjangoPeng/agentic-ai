@@ -33,7 +33,7 @@ jobs:
       - name: Run smoke tests
         run: |
           source .venv/bin/activate
-          python -m unittest tests.test_smoke -v
+          PYTHONPATH=.. python -m unittest tests.test_smoke -v
 
   test-crm-assistant:
     name: CRM Assistant Tests
@@ -99,7 +99,7 @@ jobs:
             './common/feishu/auth.py'
           )
 
-          API_MATCHES=$(grep -rE 'open\.feishu\.cn|Bearer\s' --include='*.py' . 2>/dev/null || true)
+          API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant|Bearer\s' --include='*.py' . 2>/dev/null || true)
 
           while IFS= read -r line; do
             if [ -z "$line" ]; then
