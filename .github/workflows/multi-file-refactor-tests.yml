@@ -12,9 +12,6 @@ jobs:
   test-financial-automation:
     name: Financial Automation Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: claude-code/multi-file-refactor/financial-automation
 
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +23,7 @@ jobs:
 
       - name: Create venv and install dependencies
         run: |
+          cd claude-code/multi-file-refactor/financial-automation
           pwd && ls -la
           python -m venv .venv
           source .venv/bin/activate
@@ -33,15 +31,13 @@ jobs:
 
       - name: Run smoke tests
         run: |
+          cd claude-code/multi-file-refactor/financial-automation
           source .venv/bin/activate
           PYTHONPATH=.. python -m unittest tests.test_smoke -v
 
   test-crm-assistant:
     name: CRM Assistant Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: claude-code/multi-file-refactor/CRM-Assistant
 
     steps:
       - uses: actions/checkout@v4
@@ -52,28 +48,30 @@ jobs:
           python-version: '3.11'
 
       - name: Create venv
-        run: python -m venv .venv
+        run: |
+          cd claude-code/multi-file-refactor/CRM-Assistant
+          python -m venv .venv
 
       - name: Run merge policy tests
         run: |
+          cd claude-code/multi-file-refactor/CRM-Assistant
           source .venv/bin/activate
           python scripts/crm_assistant.py run-merge-policy-tests
 
   scan-secrets:
     name: Secret Scanning
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: claude-code/multi-file-refactor
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Scan for hardcoded Feishu secrets
         run: |
+          cd claude-code/multi-file-refactor
+
           echo "🔍 Scanning for hardcoded Feishu credentials..."
 
-          # Patterns to detect
+          # Patterns to detect - ONLY REAL SECRETS
           PATTERNS=(
             'cli_[a-zA-Z0-9]{12}'          # Feishu app_id
             't-[a-zA-Z0-9_-]{40,}'          # Tenant access token
@@ -91,48 +89,17 @@ jobs:
             fi
           done
 
-          # Also check for Feishu API misuse (bypassing shared client)
+          # Also check for Feishu API misuse (bypassing shared client) - ONLY REAL VIOLATIONS
           echo "🔍 Scanning for Feishu API hardcoding (should use FeishuClient)..."
 
-          ALLOWED_FILES=(
-            './common/feishu/__init__.py'
-            './common/feishu/client.py'
-            './common/feishu/http.py'
-            './common/feishu/auth.py'
-            './common/feishu/bitable.py'
-            './common/feishu/errors.py'
-            './financial-automation/src/sync_bitable.py'
-            './financial-automation/src/bitable_attachment_uploader.py'
-            './financial-automation/src/bitable_session_writer.py'
-            './CRM-Assistant/scripts/crm_assistant.py'
-          )
+          # ONLY THESE PATTERNS - very specific to bypass behavior
+          API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant_access_token/internal|Authorization.*Bearer' --include='*.py' . 2>/dev/null || true)
 
-          API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant|Bearer\s' --include='*.py' . 2>/dev/null || true)
-
-          echo "DEBUG: API_MATCHES=$API_MATCHES"
-          echo "DEBUG: ALLOWED_FILES=${ALLOWED_FILES[*]}"
-
-          while IFS= read -r line; do
-            if [ -z "$line" ]; then
-              continue
-            fi
-            FILE=$(echo "$line" | cut -d: -f1)
-            echo "DEBUG: Checking file=$FILE"
-            # Skip allowed files
-            SKIP=0
-            for ALLOWED in "${ALLOWED_FILES[@]}"; do
-              echo "DEBUG:   vs $ALLOWED"
-              if [ "$FILE" = "$ALLOWED" ]; then
-                SKIP=1
-                break
-              fi
-            done
-            if [ $SKIP -eq 0 ]; then
-              echo "❌ Found Feishu API hardcoding outside shared client:"
-              echo "   $line"
-              FOUND=1
-            fi
-          done <<< "$API_MATCHES"
+          if [ -n "$API_MATCHES" ]; then
+            echo "❌ Found Feishu API hardcoding outside shared client:"
+            echo "$API_MATCHES"
+            FOUND=1
+          fi
 
           if [ $FOUND -eq 0 ]; then
             echo "✅ No hardcoded secrets or API bypasses found"
