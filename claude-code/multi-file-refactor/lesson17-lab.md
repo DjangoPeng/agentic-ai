@@ -146,10 +146,12 @@ push 到这个远端分支——CI 会在 push 时自动跑起来（测试 + 扫
 
 **③ PR 自动摘要**（进阶，同上）：
 
+> ⚠️ 开 PR 走的是 **GitHub API，不是 `git push`**：SSH key 只够推代码，开 PR 得有 token。先装好 `gh` 并跑一次 `gh auth login`（浏览器授权，一次性）。**Claude Code 不会去翻你的 keychain 找凭据（这是对的），认证只能你亲自做一次。** 不想装 gh 也行：push 之后到 GitHub 仓库页点「Compare & pull request」手动开，把 CC 写的摘要贴进去就行。
+
 ```
 重构已经在那个分支上、CI 也绿了，现在基于这个分支开一个 Pull Request 到 main：
 CI 会在 PR 上再跑一次当合并门禁，标题和 PR 语义摘要你来写（讲清抽了什么、
-两个 app 怎么受影响、测试过没过）。review 通过后合并、删掉临时分支。
+两个 app 怎么受影响、测试是否通过）。review 通过后合并、删掉临时分支。
 ```
 
 > 💡 push ≠ 再推一遍代码：push 是把分支传上去、顺带触发一次 CI；PR 是为这个**已上传的分支**开一个到 main 的合并请求——再触发一次 CI 当门禁、出语义摘要、给 review/合并入口。所以 ② 和 ③ 是一条链上的两步，不是把改动推两遍。
