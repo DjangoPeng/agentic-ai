@@ -333,12 +333,13 @@ def _date_to_millis(value: Any) -> int | None:
     if isinstance(value, (int, float)):
         return int(value)
     try:
-        dt = datetime.fromisoformat(str(value))
+        date_str = str(value)
+        # Parse as date first, then create a UTC datetime at 00:00
+        dt = datetime.fromisoformat(date_str)
+        if dt.tzinfo is None:
+            dt = datetime(year=dt.year, month=dt.month, day=dt.day, tzinfo=timezone.utc)
     except ValueError:
         return None
-    # Treat naive datetime as UTC for consistent test results
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
     return int(dt.timestamp() * 1000)
 
 
