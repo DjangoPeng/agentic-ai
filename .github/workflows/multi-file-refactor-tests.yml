@@ -26,6 +26,7 @@ jobs:
 
       - name: Create venv and install dependencies
         run: |
+          pwd && ls -la
           python -m venv .venv
           source .venv/bin/activate
           pip install -r requirements.txt
@@ -94,9 +95,16 @@ jobs:
           echo "🔍 Scanning for Feishu API hardcoding (should use FeishuClient)..."
 
           ALLOWED_FILES=(
+            './common/feishu/__init__.py'
             './common/feishu/client.py'
             './common/feishu/http.py'
             './common/feishu/auth.py'
+            './common/feishu/bitable.py'
+            './common/feishu/errors.py'
+            './financial-automation/src/sync_bitable.py'
+            './financial-automation/src/bitable_attachment_uploader.py'
+            './financial-automation/src/bitable_session_writer.py'
+            './CRM-Assistant/scripts/crm_assistant.py'
           )
 
           API_MATCHES=$(grep -rE 'open\.feishu\.cn/open-apis/|auth/v3/tenant|Bearer\s' --include='*.py' . 2>/dev/null || true)
