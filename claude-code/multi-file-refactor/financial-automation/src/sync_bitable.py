@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -334,10 +334,11 @@ def _date_to_millis(value: Any) -> int | None:
         return int(value)
     try:
         date_str = str(value)
-        # Parse as date first, then create a UTC datetime at 00:00
+        # 纯日期按北京时间（UTC+8）零点解释——发票/行程日期是中国本地日期，
+        # 固定偏移确保毫秒值与运行环境时区无关（本机、UTC CI 结果一致）。
         dt = datetime.fromisoformat(date_str)
         if dt.tzinfo is None:
-            dt = datetime(year=dt.year, month=dt.month, day=dt.day, tzinfo=timezone.utc)
+            dt = datetime(year=dt.year, month=dt.month, day=dt.day, tzinfo=timezone(timedelta(hours=8)))
     except ValueError:
         return None
     return int(dt.timestamp() * 1000)
