@@ -1,0 +1,116 @@
+<svg width="680" height="520" viewBox="0 0 680 520" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>github-secret-auditor 协作架构图</title>
+<desc>用户经飞书提供仓库地址,OpenClaw 读取 Skill 协议层后作为编排 Agent,通过 ACP 调度通道与执行 Agent Claude Code 双向协作,Claude Code 在授权仓库内巡检修复但不发布,OpenClaw 验收后 commit/push 并发送飞书报告,全程受安全边界约束。</desc>
+<style>
+text{font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+.t{font-size:14px;font-weight:400;fill:#2C2C2A;stroke:none}
+.ts{font-size:12px;font-weight:400;fill:#5F5E5A;stroke:none}
+.th{font-size:14px;font-weight:500;fill:#2C2C2A;stroke:none}
+.box{fill:#F5F4EF;stroke:#D8D6CC;stroke-width:.5}
+.c-teal{fill:#E1F5EE;stroke:#0F6E56;stroke-width:.5}
+.c-teal .th,.c-teal .t{fill:#085041}.c-teal .ts{fill:#0F6E56}
+.c-purple{fill:#EEEDFE;stroke:#534AB7;stroke-width:.5}
+.c-purple .th,.c-purple .t{fill:#3C3489}.c-purple .ts{fill:#534AB7}
+.c-coral{fill:#FAECE7;stroke:#993C1D;stroke-width:.5}
+.c-coral .th,.c-coral .t{fill:#712B13}.c-coral .ts{fill:#993C1D}
+.c-gray{fill:#F1EFE8;stroke:#888780;stroke-width:.5}
+.c-gray .th,.c-gray .t{fill:#2C2C2A}.c-gray .ts{fill:#5F5E5A}
+</style>
+<defs>
+<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<rect x="0" y="0" width="680" height="520" fill="#ffffff"/>
+
+<g class="c-gray">
+<rect x="250" y="24" width="180" height="44" rx="8"/>
+<text class="th" x="340" y="40" text-anchor="middle" dominant-baseline="central">用户</text>
+<text class="ts" x="340" y="57" text-anchor="middle" dominant-baseline="central">飞书 · 提供 repo_url</text>
+</g>
+
+<line x1="340" y1="68" x2="340" y2="85" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+<rect x="60" y="88" width="560" height="98" rx="8" class="box" style="stroke-dasharray:4 3"/>
+<text class="th" x="76" y="106" text-anchor="start" dominant-baseline="central">Skill 协议层 · github-secret-auditor</text>
+<g class="c-gray">
+<rect x="76" y="120" width="168" height="58" rx="6"/>
+<text class="th" x="160" y="142" text-anchor="middle" dominant-baseline="central">SKILL.md</text>
+<text class="ts" x="160" y="160" text-anchor="middle" dominant-baseline="central">主协议 · 分工 · 验收</text>
+</g>
+<g class="c-gray">
+<rect x="256" y="120" width="168" height="58" rx="6"/>
+<text class="th" x="340" y="142" text-anchor="middle" dominant-baseline="central">templates/</text>
+<text class="ts" x="340" y="160" text-anchor="middle" dominant-baseline="central">prompt / 任务包模板</text>
+</g>
+<g class="c-gray">
+<rect x="436" y="120" width="168" height="58" rx="6"/>
+<text class="th" x="520" y="142" text-anchor="middle" dominant-baseline="central">references/</text>
+<text class="ts" x="520" y="160" text-anchor="middle" dominant-baseline="central">preflight 部署参考</text>
+</g>
+
+<line x1="168" y1="186" x2="168" y2="209" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="176" y="200" text-anchor="start" dominant-baseline="central">OpenClaw 读取 Skill</text>
+
+<g class="c-teal">
+<rect x="56" y="212" width="212" height="88" rx="8"/>
+<text class="th" x="162" y="235" text-anchor="middle" dominant-baseline="central">编排 · OpenClaw（龙虾）</text>
+<text class="ts" x="162" y="257" text-anchor="middle" dominant-baseline="central">读取 Skill · 准备仓库</text>
+<text class="ts" x="162" y="277" text-anchor="middle" dominant-baseline="central">生成任务包 · 验收 · 推送</text>
+</g>
+
+<g class="c-purple">
+<rect x="400" y="212" width="224" height="88" rx="8"/>
+<text class="th" x="512" y="235" text-anchor="middle" dominant-baseline="central">执行 · Claude Code</text>
+<text class="ts" x="512" y="257" text-anchor="middle" dominant-baseline="central">搜索敏感信息 · 最小修复</text>
+<text class="ts" x="512" y="277" text-anchor="middle" dominant-baseline="central">本地验证 · 输出 diff 摘要</text>
+</g>
+
+<g class="c-coral">
+<rect x="300" y="228" width="68" height="56" rx="8"/>
+<text class="th" x="334" y="250" text-anchor="middle" dominant-baseline="central">ACP</text>
+<text class="ts" x="334" y="268" text-anchor="middle" dominant-baseline="central">通道</text>
+</g>
+
+<line x1="268" y1="246" x2="298" y2="246" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="368" y1="246" x2="398" y2="246" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="398" y1="266" x2="368" y2="266" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="298" y1="266" x2="268" y2="266" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="283" y="239" text-anchor="middle" dominant-baseline="central">调度</text>
+<text class="ts" x="383" y="273" text-anchor="middle" dominant-baseline="central">返回</text>
+
+<line x1="120" y1="300" x2="120" y2="351" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="126" y="327" text-anchor="start" dominant-baseline="central">验收后发送报告</text>
+
+<path d="M230 300 L230 330 L468 330 L468 351" fill="none" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="349" y="322" text-anchor="middle" dominant-baseline="central">验收后 commit / push</text>
+
+<line x1="540" y1="300" x2="540" y2="351" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="536" y="322" text-anchor="end" dominant-baseline="central">只 fix · 不 push</text>
+
+<g class="c-gray">
+<rect x="56" y="352" width="212" height="72" rx="8"/>
+<text class="th" x="162" y="375" text-anchor="middle" dominant-baseline="central">飞书巡检报告</text>
+<text class="ts" x="162" y="396" text-anchor="middle" dominant-baseline="central">状态 · commit · 风险摘要</text>
+<text class="ts" x="162" y="414" text-anchor="middle" dominant-baseline="central">risk_notes · 下一步建议</text>
+</g>
+
+<g class="c-gray">
+<rect x="412" y="352" width="212" height="72" rx="8"/>
+<text class="th" x="518" y="375" text-anchor="middle" dominant-baseline="central">目标 GitHub 仓库</text>
+<text class="ts" x="518" y="396" text-anchor="middle" dominant-baseline="central">授权仓库 · 共享工作区</text>
+<text class="ts" x="518" y="414" text-anchor="middle" dominant-baseline="central">审计 / 修复 / 推送</text>
+</g>
+
+<rect x="56" y="440" width="568" height="34" rx="6" class="box" style="stroke-dasharray:4 3"/>
+<text class="ts" x="68" y="457" text-anchor="start" dominant-baseline="central">安全边界 · 仅授权仓库 · 不读密钥/私钥/生产配置 · 不输出完整密钥 · 报告不入库</text>
+
+<rect x="60" y="486" width="12" height="12" rx="3" class="c-teal"/>
+<text class="ts" x="78" y="492" text-anchor="start" dominant-baseline="central">编排 Agent · OpenClaw</text>
+<rect x="232" y="486" width="12" height="12" rx="3" class="c-purple"/>
+<text class="ts" x="250" y="492" text-anchor="start" dominant-baseline="central">执行 Agent · Claude Code</text>
+<rect x="430" y="486" width="12" height="12" rx="3" class="c-coral"/>
+<text class="ts" x="448" y="492" text-anchor="start" dominant-baseline="central">ACP 调度通道</text>
+<rect x="556" y="486" width="12" height="12" rx="3" class="c-gray"/>
+<text class="ts" x="574" y="492" text-anchor="start" dominant-baseline="central">输入/产物</text>
+</svg>

@@ -1,0 +1,22 @@
+# 本项目是 Skill 协议,无运行产物;以下仅防系统/编辑器杂物与密钥误入。
+
+# OS / 编辑器
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Python(本项目不含代码,防御性忽略)
+__pycache__/
+*.pyc
+.venv/
+
+# 密钥 / 本地配置(绝不入库)
+.env
+.env.local
+*.key
+*.pem
+settings.json
+
+# 巡检报告不入库(规范:报告只发飞书或写服务器 /srv/openclaw-runner/reports)
+security-report.md

@@ -14,6 +14,8 @@ Main areas:
 - `financial-automation/`: Python OCR/PDF extraction pipeline for invoices, validation, attachment upload, and Feishu Bitable write-back.
 - `morning-newspaper/`: Python multi-source news collection pipeline with three LLM editorial gates, static dashboard generation, and Feishu delivery workflow.
 - `CRM-Assistant/`: Python standard-library CLI that converts Feishu meeting raw data/transcripts into CRM assets and Feishu Bitable rows.
+- `ai-quant-cli/`: Python CLI that parses A-share annual-report PDFs into structured financials; Claude Code itself performs the risk analysis (no LLM API in code), then scripts render charts and a single-page HTML investment report.
+- `github-secret-auditor/`: OpenClaw Skill with no runnable code; it drives Claude Code over ACP to audit and remediate leaked secrets in an authorized GitHub repo, with OpenClaw handling review, commit/push, and the Feishu report.
 
 No Cursor rules, `.cursorrules`, or GitHub Copilot instruction file are present at repository root.
 
@@ -185,6 +187,21 @@ openclaw devices approve <request-id>
 
 The infra docs assume OpenClaw Gateway remains bound to localhost and is exposed through Tailscale Serve. Do not change deployment examples to expose port `18789` publicly.
 
+### AI Quant CLI
+
+```bash
+cd ai-quant-cli
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python scripts/run_pipeline.py        # parse → figures → L4 analysis gate → HTML report
+```
+
+L4 risk analysis (`analysis/findings_<code>.json`) is produced by Claude Code itself, not by a script; the pipeline gates on it before building the report. See `ai-quant-cli/CLAUDE.md` for the DAG and data contract.
+
+### GitHub Secret Auditor
+
+No runnable code: this is an OpenClaw Skill driven via ACP, not a local CLI, so there is nothing to `pip install`. See `github-secret-auditor/README.md` and `github-secret-auditor/lesson19-lab.md` for the deploy → ACP handshake → orchestrated audit flow, and `github-secret-auditor/CLAUDE.md` for the Skill contract.
+
 ## Architecture notes
 
 ### Runtime and configuration pattern
@@ -200,6 +217,7 @@ Several projects include OpenClaw Skill definitions:
 - `morning-newspaper/skills/morning-newspaper-assistant-skill/SKILL.md`
 - `CRM-Assistant/skills/crm-assistant/SKILL.md`
 - `openclaw-skills/examples/crypto-monitor/SKILL.md`
+- `github-secret-auditor/skills/github-secret-auditor/SKILL.md`
 
 When changing workflow behavior, update both the runnable scripts and the relevant Skill contract if the agent-facing process changes.
 
