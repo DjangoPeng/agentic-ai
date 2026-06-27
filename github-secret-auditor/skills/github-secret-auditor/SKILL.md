@@ -37,7 +37,7 @@ description: 当用户希望让 OpenClaw 通过 ACP 调度 Claude Code，对 Git
 最小用户入口示例：
 
 ```text
-请使用 github-secret-auditor Skill 全自动巡检并修复 https://github.com/lemons101/agentic-ai.git
+请使用 github-secret-auditor Skill 全自动巡检并修复 https://github.com/DjangoPeng/agentic-ai.git
 ```
 
 OpenClaw 必须先读取本 `SKILL.md`，再执行默认任务流。后台自动化默认使用 OpenClaw Sessions API：
@@ -200,7 +200,7 @@ OpenClaw 应把 session 信息保存到当前任务状态：
 
 用户至少应提供：
 
-- `repo_url`：GitHub 仓库地址，例如 `https://github.com/lemons101/agentic-ai.git`。
+- `repo_url`：GitHub 仓库地址，例如 `https://github.com/DjangoPeng/agentic-ai.git`。
 - `branch`：目标分支，默认 `main`。
 - `mode`：默认 `audit_fix_push_report`。
 
@@ -228,7 +228,7 @@ OpenClaw 应把 session 信息保存到当前任务状态：
 ```json
 {
   "status": "passed | failed",
-  "repo": "lemons101/agentic-ai",
+  "repo": "DjangoPeng/agentic-ai",
   "runner": "acp",
   "session_key": "agent:claude:acp:...",
   "report_path": "/srv/openclaw-runner/reports/agentic-ai-security-report.md",

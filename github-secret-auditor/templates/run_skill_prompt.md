@@ -3,7 +3,7 @@
 目标仓库：
 
 ```text
-https://github.com/lemons101/agentic-ai.git
+https://github.com/DjangoPeng/agentic-ai.git
 ```
 
 要求：
@@ -22,7 +22,7 @@ https://github.com/lemons101/agentic-ai.git
 passed / failed
 
 目标仓库：
-lemons101/agentic-ai
+DjangoPeng/agentic-ai
 
 是否调用 Claude Code：
 yes / no

@@ -17,5 +17,5 @@
 | 节 | 产物本质 | 落点 |
 | --- | --- | --- |
 | 18 · AI Quant CLI 量化投研系统 | 从零造的独立 app | 顶层 `ai-quant-cli/`（套 L12–15 范式，lab 内置） |
-| 19 · 夜间代码自愈（OpenClaw × Claude Code） | 整合已有组件 + MCP 桥 | `openclaw-multi-agent/` |
+| 19 · 夜间代码自愈（OpenClaw × Claude Code） | OpenClaw 经 ACP 调度 Claude Code（多 Agent 协作） | 顶层 `github-secret-auditor/` |
 | 20 · 企业级安全审计与生产治理 | 治理清单 / 文档为主 | `openclaw-infra/checklists/`（或新建 `governance/`） |

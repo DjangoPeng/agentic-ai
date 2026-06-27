@@ -93,7 +93,8 @@
 │       └── crypto-monitor/
 │           └── SKILL.md              #   加密货币行情巡检 Skill（课程实战版）
 │
-├── openclaw-multi-agent/             # 多 Agent 协作与路由调度（即将更新）
+├── ai-quant-cli/                     # 第18节：从空目录造 AI 量化投研系统（解析 → 研判 → 出图 → HTML 报告）
+├── github-secret-auditor/            # 第19节：OpenClaw 经 ACP 调度 Claude Code 巡检 GitHub 密钥泄露（夜间代码自愈）
 ├── claude-code/                      # Claude Code CLI 深度实战（即将更新）
 ├── xhs-auto-publisher/               # 第12节：云端小红书图文自动发布 Agent（Playwright + 龙虾通知）
 ├── financial-automation/             # 第13节：全自动财务填报与票据识别 Agent（OCR + 飞书 Bitable）

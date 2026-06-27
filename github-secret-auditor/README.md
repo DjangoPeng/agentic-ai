@@ -75,7 +75,7 @@
 面向 OpenClaw 的最小用户入口（一句话全自动）：
 
 ```text
-请使用 github-secret-auditor Skill 全自动巡检并修复 https://github.com/lemons101/agentic-ai.git
+请使用 github-secret-auditor Skill 全自动巡检并修复 https://github.com/DjangoPeng/agentic-ai.git
 ```
 
 换巡检仓库只需替换 GitHub 仓库地址。OpenClaw 先读取 [`SKILL.md`](skills/github-secret-auditor/SKILL.md)，再执行默认任务流；启动模板见 [`templates/run_skill_prompt.md`](templates/run_skill_prompt.md)，课堂实验步骤见 [`lesson19-lab.md`](lesson19-lab.md)。

@@ -1,8 +1,9 @@
-# 第19节 实验手册：OpenClaw 调度 Claude Code 完成 GitHub 安全巡检
+# 第 19 节 实验手册：OpenClaw 调度 Claude Code 完成 GitHub 安全巡检
 
-> 配套课程：AI 业务流架构师 · 第19节 多 Agent 协作：夜间代码自愈实验室  
-> 操作方式：实验零在服务器命令行完成；实验一开始再把 Prompt 交给龙虾执行  
-> 预计耗时：40-60 分钟
+> 配套课程：AI 业务流架构师 · 第 19 节《多 Agent 协作：夜间代码自愈实验室》
+> 预计耗时：40–60 分钟
+> 操作方式：步骤 0 在服务器命令行完成；从步骤 1 起把 Prompt 交给龙虾执行
+> 前置条件：OpenClaw 已部署；服务器已装 Claude Code 并接 Opus 4.8；ACP / ACPX 后端就绪（见 references/preflight_setup.md）
 
 ---
 
@@ -36,7 +37,7 @@
 默认测试仓库：
 
 ```text
-https://github.com/lemons101/agentic-ai.git
+https://github.com/DjangoPeng/agentic-ai.git
 ```
 
 默认路径：
@@ -57,7 +58,7 @@ https://github.com/lemons101/agentic-ai.git
 
 ---
 
-## 实验零：安装 Claude Code
+## 0. 安装 Claude Code
 
 这一拍的目标不是开始巡检，而是先把“执行者”装好：让 OpenClaw 后面能通过 ACP 调度 Claude Code。
 
@@ -85,43 +86,44 @@ curl -fsSL https://claude.ai/install.sh | bash
 
 这一步不要发给龙虾执行。请在服务器 SSH / Terminal 里自己完成，尤其是 `settings.json` 里的 API Key，不要通过飞书、聊天窗口或截图暴露。
 
-创建配置目录：
+创建配置文件（`~/.claude` 在装好 Claude Code 后已经存在，这里只是补上 `settings.json`）：
 
 ```bash
-mkdir -p /root/.claude
+mkdir -p /root/.claude              # 已存在则无副作用
 chmod 700 /root/.claude
-nano /root/.claude/settings.json
+nano /root/.claude/settings.json    # 新建并填入下方配置
 ```
 
 如果使用 Claude 官方登录，按交互式登录完成认证即可。
 
-如果使用 Anthropic 兼容中转服务，在 `settings.json` 中写入下面的结构。注意：`ANTHROPIC_AUTH_TOKEN` 只能写自己的真实值，课程文档、GitHub、飞书消息和截图里都不要出现完整密钥。
+本课程推荐用**火山引擎方舟 Coding Plan**（购买套餐与获取 API Key 见 [`openclaw-models/volcengine-coding-plan.md`](../openclaw-models/volcengine-coding-plan.md)）。
 
-`settings.json` 示例说明：
+> ⚠️ **协议别搞混**：火山 Coding Plan 有两个不同的接入地址，对应两种协议——
+> - **OpenClaw**（OpenAI 协议）用 `https://ark.cn-beijing.volces.com/api/coding/v3`（带 `/v3`），配在 `~/.openclaw/openclaw.json`。
+> - **Claude Code**（Anthropic 协议）用 `https://ark.cn-beijing.volces.com/api/coding`（**不带 `/v3`**），配在 `~/.claude/settings.json`，Claude Code 会自动在其后拼 `/v1/messages`。
+>
+> 把 OpenClaw 那个 `/api/coding/v3` 填进 Claude Code，会因协议不符打不通。
+
+在 `~/.claude/settings.json` 写入下面的结构（`ANTHROPIC_AUTH_TOKEN` 只填你自己的真实 Key，课件、仓库、飞书消息和截图里都不要出现完整密钥）：
 
 ```json
 {
-  "theme": "dark",
   "env": {
-    "ANTHROPIC_BASE_URL": "https://<your-anthropic-compatible-endpoint>",
-    "ANTHROPIC_AUTH_TOKEN": "<YOUR_API_KEY_DO_NOT_SHARE>",
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0"
+    "ANTHROPIC_BASE_URL": "https://ark.cn-beijing.volces.com/api/coding",
+    "ANTHROPIC_AUTH_TOKEN": "<你的火山 API Key，只存服务器本地>",
+    "ANTHROPIC_MODEL": "ark-code-latest",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"
   }
 }
 ```
 
 配置要点：
 
-- `ANTHROPIC_BASE_URL`：Anthropic 兼容接口地址；如果使用官方交互式登录，可不填这一项。
-- `ANTHROPIC_AUTH_TOKEN`：API Key，只能保存在服务器本地配置中，不要写进课件、仓库、飞书消息或截图。
+- `ANTHROPIC_BASE_URL`：火山 Coding Plan 的 **Anthropic 兼容地址** `https://ark.cn-beijing.volces.com/api/coding`（**不带 `/v3`**；带 `/v3` 的是 OpenClaw 用的 OpenAI 地址）。用 Claude 官方交互式登录则不填这一项。
+- `ANTHROPIC_AUTH_TOKEN`：火山 API Key（方舟控制台获取），只能保存在服务器本地配置中，不要写进课件、仓库、飞书消息或截图。
+- `ANTHROPIC_MODEL`：火山模型名，如 `ark-code-latest`（方舟自动调度最优编程模型）或 `kimi-k2.5`。用非 Claude 模型时**必填**，否则 Claude Code 默认请求 `claude-opus-4-8`，火山不认。
 - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`：减少非必要网络流量，课堂服务器建议开启。
-- `CLAUDE_CODE_ATTRIBUTION_HEADER`：如中转服务不支持 attribution header，可设为 `"0"`。
 - `/root/.claude/settings.json` 必须设置为 `600`，避免其他用户读取。
-
-配置文件可参考这张示例图：
-
-![Claude API 配置示例](assets/claude-api-config.png)
 
 保存配置后执行：
 
@@ -145,12 +147,12 @@ claude -p "只回复 OK"
 
 ---
 
-## 实验一：安装 github-secret-auditor Skill
+## 1. 安装 github-secret-auditor Skill
 
 发给龙虾：
 
 ```text
-请帮我安装并更新第19节实验用的 github-secret-auditor Skill。
+请帮我安装并更新第 19 节实验用的 github-secret-auditor Skill。
 
 目录：
 - Skill：/root/projects/github-secret-auditor-skill
@@ -196,7 +198,7 @@ claude -p "只回复 OK"
 
 ---
 
-## 实验二：验证 ACP 握手
+## 2. 验证 ACP 握手
 
 注意：`/acp ...` 是飞书 / OpenClaw 对话框命令，不是 shell 命令。
 
@@ -216,7 +218,7 @@ healthy: yes
 
 到这里先不创建 Claude Code 会话。
 
-原因：`/acp spawn` 或 `sessions_spawn` 都需要指定 `cwd`，也就是目标仓库路径。目标仓库要到实验三才准备好。
+原因：`/acp spawn` 或 `sessions_spawn` 都需要指定 `cwd`，也就是目标仓库路径。目标仓库要到步骤 3 才准备好。
 
 本实验只确认一件事：OpenClaw 的 ACPX 后端是健康的，后面可以调度 Claude Code。
 
@@ -268,15 +270,17 @@ Agent-to-agent messaging is disabled
 
 ---
 
-## 实验三：准备仓库和任务包
+## 3. 准备仓库和任务包
+
+> 审计目标用课程项目 `DjangoPeng/agentic-ai` 的**一次性测试分支 `secret-audit-demo`**：巡检 / 修复 / 推送都落在该分支，`main` 永不被碰；植入的假密钥隔离在 `demo_target/`，与仓库里既有脱敏示例区分。该分支需已存在于远端（OpenClaw 从远端 clone）。
 
 发给龙虾：
 
 ```text
-请准备第19节安全巡检实验的测试仓库和任务包。
+请准备第 19 节安全巡检实验的测试仓库和任务包。
 
 目标仓库：
-https://github.com/lemons101/agentic-ai.git
+https://github.com/DjangoPeng/agentic-ai.git
 
 本地路径：
 /srv/openclaw-runner/repos/agentic-ai
@@ -288,16 +292,16 @@ https://github.com/lemons101/agentic-ai.git
 /srv/openclaw-runner/reports/agentic-ai-security-report.md
 
 请执行：
-1. 如果本地仓库不存在，clone 到 /srv/openclaw-runner/repos/agentic-ai。
+1. 如果本地仓库不存在，clone 到 /srv/openclaw-runner/repos/agentic-ai 并切到 secret-audit-demo 分支。
 2. 如果本地仓库已存在，先执行 git status --short。
 3. 如果工作区不干净，停止并回报 failed，不要 reset，不要覆盖。
 4. 如果工作区干净，执行 git pull --ff-only。
 5. 基于 Skill 模板生成任务包到 /srv/openclaw-runner/tasks/agentic-ai-secret-audit.json。
 
 任务包至少包含：
-- repo_url: https://github.com/lemons101/agentic-ai.git
+- repo_url: https://github.com/DjangoPeng/agentic-ai.git
 - repo_path: /srv/openclaw-runner/repos/agentic-ai
-- branch: main
+- branch: secret-audit-demo
 - allow_auto_fix: true
 - allow_push: true
 - report_path: /srv/openclaw-runner/reports/agentic-ai-security-report.md
@@ -328,7 +332,7 @@ report_path
 
 ---
 
-## 实验四：创建并记录 ACP 会话：只读试跑
+## 4. 创建并记录 ACP 会话（只读试跑）
 
 这一步才真正创建 Claude Code ACP 会话，并记录后续补漏投递要用的 `childSessionKey`。
 
@@ -385,7 +389,7 @@ git status --short: 空
 
 ---
 
-## 实验五：验证补漏投递
+## 5. 验证补漏投递
 
 发给龙虾：
 
@@ -422,7 +426,7 @@ sessions_send(
 
 ---
 
-## 实验六：执行最终安全巡检
+## 6. 执行最终安全巡检
 
 只读试跑和补漏投递通过后，执行最终实验。
 
@@ -432,7 +436,7 @@ sessions_send(
 请使用 /root/projects/github-secret-auditor-skill/SKILL.md 执行一次全自动 GitHub 密钥泄露巡检。
 
 目标仓库：
-https://github.com/lemons101/agentic-ai.git
+https://github.com/DjangoPeng/agentic-ai.git
 
 要求：
 1. 全程自动化执行，不要让我手动复制 session、手动执行命令、手动拼接 prompt 或手动验收。
@@ -445,7 +449,7 @@ https://github.com/lemons101/agentic-ai.git
 最终回复格式：
 
 状态：passed / failed
-目标仓库：lemons101/agentic-ai
+目标仓库：DjangoPeng/agentic-ai
 是否调用 Claude Code：yes / no
 调用方式：acp / failed
 是否已推送到 GitHub：yes / no
@@ -523,7 +527,7 @@ commit：<commit hash>
 
 ---
 
-## 常见问题
+## 常见问题速查
 
 - `claude: command not found`：检查 `~/.local/bin/claude` 是否存在，并确认 `~/.local/bin` 在 PATH 中。
 - 当前终端能运行 `claude`，OpenClaw 不能：多半是 gateway 运行用户或 PATH 不一致。
@@ -543,15 +547,15 @@ commit：<commit hash>
 
 ## 实验记录
 
-| # | 发生在哪一步 | 预期行为 | 实际行为 | 解决方法 |
-|---|---|---|---|---|
+| # | 发生在哪一步 | 预期行为 | 实际行为 | 你的解决方法 |
+|---|------------|----------|---------|------------|
 | 1 | | | | |
 | 2 | | | | |
 | 3 | | | | |
 
 ---
 
-## 课后练习
+## 课后作业
 
 ### 必做 1：复现只读链路
 
