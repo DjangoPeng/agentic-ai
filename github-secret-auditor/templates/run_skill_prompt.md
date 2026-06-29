@@ -1,4 +1,4 @@
-请使用 `/root/projects/github-secret-auditor-skill/SKILL.md` 执行一次全自动 GitHub 密钥泄露巡检。
+请使用 `/root/projects/agentic-ai/github-secret-auditor/skills/github-secret-auditor/SKILL.md` 执行一次全自动 GitHub 密钥泄露巡检。
 
 目标仓库：
 

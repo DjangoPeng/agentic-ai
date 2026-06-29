@@ -3,7 +3,7 @@
 > 配套课程：AI 业务流架构师 · 第 19 节《多 Agent 协作：夜间代码自愈实验室》
 > 预计耗时：40–60 分钟
 > 操作方式：步骤 0 在服务器命令行完成；从步骤 1 起把 Prompt 交给龙虾执行
-> 前置条件：OpenClaw 已部署；服务器已装 Claude Code 并接 Opus 4.8；ACP / ACPX 后端就绪（见 references/preflight_setup.md）
+> 前置条件：OpenClaw 已部署并接入飞书 / 对话框；有一台可 SSH 的服务器（步骤 0 在其上装 Claude Code 与 ACPX 后端）；部署细节见 references/preflight_setup.md
 
 ---
 
@@ -43,11 +43,13 @@ https://github.com/DjangoPeng/agentic-ai.git
 默认路径：
 
 ```text
-/root/projects/github-secret-auditor-skill
-/srv/openclaw-runner/repos/agentic-ai
+/root/projects/agentic-ai                                  # Skill 源：课程仓库 main 分支，Skill 在 github-secret-auditor/ 子目录
+/srv/openclaw-runner/repos/agentic-ai                      # 巡检目标：同一仓库的 secret-audit-demo 分支
 /srv/openclaw-runner/tasks/agentic-ai-secret-audit.json
 /srv/openclaw-runner/reports/agentic-ai-security-report.md
 ```
+
+> 注意：`DjangoPeng/agentic-ai` 在本实验里身兼两职——既是 **Skill 源**（`main` 分支，OpenClaw 从中读取 `github-secret-auditor/` 下的 Skill），又是 **巡检目标**（`secret-audit-demo` 分支，Claude Code 在其上扫描修复）。因此它被 clone 两份、落在两个不同路径、检出两条不同分支，互不干扰。
 
 安全边界：
 
@@ -58,13 +60,15 @@ https://github.com/DjangoPeng/agentic-ai.git
 
 ---
 
-## 0. 安装 Claude Code
+## 0. 服务器端准备：Claude Code 与 ACPX 后端
 
-这一拍的目标不是开始巡检，而是先把“执行者”装好：让 OpenClaw 后面能通过 ACP 调度 Claude Code。
+这一拍的目标不是开始巡检，而是先在服务器上把两样东西装好：**执行者** Claude Code，和 OpenClaw 调度它要走的 **ACPX 后端**。两者都在服务器命令行完成（0.1 装 Claude Code，0.2 装 ACPX），不要发给龙虾。
 
 ![ACP 同机边界：OpenClaw（ACP 客户端）以本机 stdio 子进程方式驱动 Claude Code（ACP 智能体），二者必须在同一台主机；GitHub 与飞书是 OpenClaw 经网络访问的远程端点](assets/diagrams/03-acp-colocation-boundary.svg)
 
 > ACP 的标准传输是 **stdio 子进程**：OpenClaw 在本机把 `claude` 当子进程拉起来通信。所以 **Claude Code 必须和 OpenClaw 装在同一台主机**，且 gateway 服务账户要能调用同一个 `claude`——这正是本实验把 Claude Code 装到 OpenClaw 服务器上的原因。
+
+### 0.1 安装并接入 Claude Code
 
 官方文档：
 
@@ -86,12 +90,12 @@ curl -fsSL https://claude.ai/install.sh | bash
 
 这一步不要发给龙虾执行。请在服务器 SSH / Terminal 里自己完成，尤其是 `settings.json` 里的 API Key，不要通过飞书、聊天窗口或截图暴露。
 
-创建配置文件（`~/.claude` 在装好 Claude Code 后已经存在，这里只是补上 `settings.json`）：
+装好后 `~/.claude` 目录已经有了。先建一个空的 `settings.json` 并**立刻 `chmod 600`**——这样待会儿写进去的真实 Key 从一开始就只有本人能读，没有"短暂可被他人读取"的窗口：
 
 ```bash
-mkdir -p /root/.claude              # 已存在则无副作用
-chmod 700 /root/.claude
-nano /root/.claude/settings.json    # 新建并填入下方配置
+mkdir -p /root/.claude                  # 已存在则无副作用（install 通常已建好）
+touch /root/.claude/settings.json       # 先把空文件建出来
+chmod 600 /root/.claude/settings.json   # 写入真实 Key 之前就收紧权限
 ```
 
 如果使用 Claude 官方登录，按交互式登录完成认证即可。
@@ -125,11 +129,11 @@ nano /root/.claude/settings.json    # 新建并填入下方配置
 - `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC`：减少非必要网络流量，课堂服务器建议开启。
 - `/root/.claude/settings.json` 必须设置为 `600`，避免其他用户读取。
 
-保存配置后执行：
+把上面的 JSON 写进这个已收紧权限的文件（含你的真实 Key），然后验证：
 
 ```bash
-chmod 600 /root/.claude/settings.json
-claude -p "只回复 OK"
+nano /root/.claude/settings.json    # 粘入上面那段 JSON（含真实 Key），保存退出；600 权限会保留
+claude -p "只回复 OK"                # 期望返回 OK
 ```
 
 如果 OpenClaw gateway 不是 root 用户启动的，还要确认 gateway 运行用户也能访问同一个 `claude` 命令和对应配置。否则终端里能跑通，OpenClaw 仍然可能调度失败。
@@ -145,9 +149,64 @@ claude -p "只回复 OK"
 
 ![Claude Code 配置验证演示](assets/claude-setup-verify-demo.png)
 
+### 0.2 安装并启用 ACPX 后端
+
+OpenClaw 通过 **ACPX 后端**经 ACP 调度 Claude Code。ACPX 随 OpenClaw 一起分发（打包在 `dist/extensions/acpx`），但要显式安装启用——没装时步骤 2 的 `/acp doctor` 会报 backend 不健康，`sessions_spawn` 也找不到 acp runtime。这一步同样在服务器命令行完成，不发给龙虾。
+
+先看当前插件里有没有 `acpx`：
+
+```bash
+openclaw config get plugins
+```
+
+`entries` 里没有 `acpx` 就装上。它从 OpenClaw 自带扩展解析，不需要联网下载：
+
+```bash
+openclaw plugins install acpx
+```
+
+再确认一次：`acpx` 应已进入 `allow`，且 `entries.acpx.enabled` 为 `true`：
+
+```bash
+openclaw config get plugins
+```
+
+期望片段（`config` 里的写入权限策略稍后在「关键配置」一节按需调整）：
+
+```json
+"acpx": {
+  "enabled": true,
+  "config": {
+    "permissionMode": "approve-all",
+    "nonInteractivePermissions": "fail",
+    "timeoutSeconds": 120
+  }
+}
+```
+
+重启 gateway 让插件生效：
+
+```bash
+systemctl restart openclaw
+```
+
+> 顺带清理：若 `openclaw config get plugins` 顶部出现 `plugins.allow: plugin not found: help (stale config entry ignored...)` 一类告警，是 `allow` 列表里残留了已不存在的插件名。重设 `allow` 去掉它即可，重启后告警消失——无害，纯清理：
+>
+> ```bash
+> openclaw config set plugins.allow '["acpx","memory-core","openclaw-lark","openclaw-weixin","volcengine"]'
+> ```
+
+通过标准：
+
+- `openclaw config get plugins` 中 `acpx` 在 `allow` 列表，且 `entries.acpx.enabled: true`。
+- gateway 重启无报错。
+- 步骤 2 的 `/acp doctor` 返回 `configuredBackend: acpx` / `registeredBackend: acpx` / `healthy: yes`。
+
 ---
 
 ## 1. 安装 github-secret-auditor Skill
+
+这一步让 OpenClaw 把 Skill 从 **GitHub 远端**克隆 / 拉取到**服务器本地**（`/root/projects/agentic-ai`）。源始终是 GitHub —— `git clone` 首次全量下载、`git pull` 之后增量更新最新 `main`；本地目录只是**检出落地点,不是代码来源**。因为 ACP 要求 OpenClaw 与 Claude Code 同机,Skill 必须先躺在服务器本地文件系统上 OpenClaw 才读得到,所以是「先从 GitHub 拉到本地,再本地读取」。
 
 发给龙虾：
 
@@ -155,7 +214,7 @@ claude -p "只回复 OK"
 请帮我安装并更新第 19 节实验用的 github-secret-auditor Skill。
 
 目录：
-- Skill：/root/projects/github-secret-auditor-skill
+- Skill 源（课程仓库）：/root/projects/agentic-ai（Skill 在子目录 github-secret-auditor/）
 - 仓库：/srv/openclaw-runner/repos
 - 任务包：/srv/openclaw-runner/tasks
 - 报告：/srv/openclaw-runner/reports
@@ -164,21 +223,21 @@ claude -p "只回复 OK"
 1. 创建目录：
    mkdir -p /root/projects /srv/openclaw-runner/repos /srv/openclaw-runner/tasks /srv/openclaw-runner/reports
 
-2. 如果 Skill 已存在：
-   cd /root/projects/github-secret-auditor-skill && git pull --ff-only
+2. 如果课程仓库已存在：
+   cd /root/projects/agentic-ai && git checkout main && git pull --ff-only
 
-3. 如果 Skill 不存在：
-   cd /root/projects && git clone git@github.com:lemons101/github-secret-auditor-skill.git
+3. 如果课程仓库不存在：
+   cd /root/projects && git clone git@github.com:DjangoPeng/agentic-ai.git
 
 4. 记录版本：
-   cd /root/projects/github-secret-auditor-skill && git rev-parse --short HEAD
+   cd /root/projects/agentic-ai && git rev-parse --short HEAD
 
-5. 检查文件：
-   - SKILL.md
-   - templates/run_skill_prompt.md
-   - templates/acp_steer_prompt.md
-   - templates/openclaw_task.secret_audit.json
-   - references/preflight_setup.md
+5. 检查文件（均在 github-secret-auditor/ 子目录下）：
+   - github-secret-auditor/skills/github-secret-auditor/SKILL.md
+   - github-secret-auditor/templates/run_skill_prompt.md
+   - github-secret-auditor/templates/acp_steer_prompt.md
+   - github-secret-auditor/templates/openclaw_task.secret_audit.json
+   - github-secret-auditor/references/preflight_setup.md
 
 暂时不要执行巡检、不要修改目标仓库、不要 push。
 
@@ -192,7 +251,7 @@ claude -p "只回复 OK"
 
 通过标准：
 
-- Skill 在 `/root/projects/github-secret-auditor-skill`。
+- 课程仓库在 `/root/projects/agentic-ai`，Skill 在 `github-secret-auditor/` 子目录。
 - 关键文件齐全。
 - 能记录当前 git commit，方便排查版本差异。
 
@@ -433,7 +492,7 @@ sessions_send(
 发给龙虾：
 
 ```text
-请使用 /root/projects/github-secret-auditor-skill/SKILL.md 执行一次全自动 GitHub 密钥泄露巡检。
+请使用 /root/projects/agentic-ai/github-secret-auditor/skills/github-secret-auditor/SKILL.md 执行一次全自动 GitHub 密钥泄露巡检。
 
 目标仓库：
 https://github.com/DjangoPeng/agentic-ai.git
@@ -515,7 +574,7 @@ commit：<commit hash>
 完成实验时，应满足：
 
 - Claude Code 安装并验证通过。
-- Skill 安装到 `/root/projects/github-secret-auditor-skill`。
+- 课程仓库克隆到 `/root/projects/agentic-ai`，Skill 在 `github-secret-auditor/` 子目录。
 - `/acp doctor` 返回 healthy。
 - 只读试跑返回正确 `pwd` 和空的 `git status --short`。
 - 最终巡检通过 ACP Sessions API 调度 Claude Code。
@@ -532,7 +591,7 @@ commit：<commit hash>
 - `claude: command not found`：检查 `~/.local/bin/claude` 是否存在，并确认 `~/.local/bin` 在 PATH 中。
 - 当前终端能运行 `claude`，OpenClaw 不能：多半是 gateway 运行用户或 PATH 不一致。
 - `claude -p "只回复 OK"` 失败：检查认证、API Key 或中转配置。
-- `/acp doctor` 失败：检查 ACPX 后端配置，并重启 gateway。
+- `/acp doctor` 失败或 backend 不健康：先 `openclaw config get plugins` 确认 `acpx` 已安装且 `enabled: true`（没有就 `openclaw plugins install acpx`，见步骤 0.2），再重启 gateway。
 - `/acp` 在 shell 中失败：正常，`/acp` 只能在飞书 / OpenClaw 对话框执行。
 - `/acp spawn` 失败：检查 `--cwd` 是否存在且为授权仓库。
 - Claude Code 只能分析不能写：检查 ACPX 写入权限和文件系统权限。

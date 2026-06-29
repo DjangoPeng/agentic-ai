@@ -9,11 +9,37 @@
 ## 推荐目录
 
 ```text
-/root/projects/github-secret-auditor-skill
+/root/projects/agentic-ai
 /srv/openclaw-runner/repos
 /srv/openclaw-runner/tasks
 /srv/openclaw-runner/reports
 ```
+
+## 安装 ACPX 后端
+
+OpenClaw 通过 ACPX 后端经 ACP 调度 Claude Code。ACPX 随 OpenClaw 一起分发（打包在 `dist/extensions/acpx`），但需显式安装启用；否则 `/acp doctor` 报 backend 不健康、`sessions_spawn` 找不到 acp runtime。
+
+```bash
+openclaw config get plugins              # 看 entries 是否已有 acpx
+openclaw plugins install acpx            # 没有则安装（从自带扩展解析，无需联网下载）
+openclaw config get plugins              # 确认 acpx 在 allow，且 entries.acpx.enabled: true
+systemctl restart openclaw               # 重启 gateway 生效
+```
+
+安装后 `entries.acpx` 形如：
+
+```json
+"acpx": {
+  "enabled": true,
+  "config": {
+    "permissionMode": "approve-all",
+    "nonInteractivePermissions": "fail",
+    "timeoutSeconds": 120
+  }
+}
+```
+
+`config` 里的写入权限策略见下文「写入权限说明」。若 `openclaw config get plugins` 顶部出现 `plugins.allow: plugin not found: help (stale config entry ignored...)` 告警，是 `plugins.allow` 残留了已卸载插件名，用 `openclaw config set plugins.allow '[...]'` 重设去掉即可，无害。
 
 ## 飞书交互健康检查
 

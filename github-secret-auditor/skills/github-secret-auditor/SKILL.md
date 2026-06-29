@@ -156,7 +156,7 @@ agent:claude:acp:258c3125-77df-42ab-90e6-207af58ceef6
 然后继续在对话框中发送以下聊天消息，投递任务：
 
 ```text
-/acp steer --session <session-key> 读取 /srv/openclaw-runner/tasks/agentic-ai-secret-audit.json，并严格按照 /root/projects/github-secret-auditor-skill/templates/acp_steer_prompt.md 执行。
+/acp steer --session <session-key> 读取 /srv/openclaw-runner/tasks/agentic-ai-secret-audit.json，并严格按照 /root/projects/agentic-ai/github-secret-auditor/templates/acp_steer_prompt.md 执行。
 ```
 
 如果验收发现缺失项，继续使用同一个 `session-key` 追加 steer：
