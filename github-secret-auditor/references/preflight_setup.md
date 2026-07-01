@@ -64,15 +64,15 @@ registeredBackend: acpx
 healthy: yes
 ```
 
-继续验证可创建 Claude Code 会话：
+继续验证可创建 Claude Code 会话（`mode=persistent` 必须配 `--thread on`；用 `--thread off` 会报 thread 冲突）：
 
 ```text
-/acp spawn claude --mode persistent --thread off --cwd /srv/openclaw-runner/repos/agentic-ai
+/acp spawn claude --mode persistent --thread on --cwd /srv/openclaw-runner/repos/agentic-ai
 ```
 
 应返回完整 `session-key`，例如 `agent:claude:acp:...`。
 
-这一步只用于证明飞书交互链路可用，不是后台 Skill runner 的默认调用方式。
+这一步只用于证明飞书交互链路可用，不是后台 Skill runner 的默认调用方式。**一次性巡检 / 修复应走 `sessions_spawn(mode=run)`**（见下节），而不是 persistent 会话 + 手动 steer——后者是交互式工作流的用法。
 
 ## 后台 Sessions API 配置
 
@@ -160,6 +160,15 @@ openclaw config set plugins.entries.acpx.config.nonInteractivePermissions deny
 ```
 
 恢复后同样需要重启 OpenClaw gateway。
+
+## GitHub 写凭据（push 阶段必需）
+
+OpenClaw 验收通过后要把修复 commit push 到目标仓库，所以**服务器必须能写该仓库**。二选一：
+
+- **fine-grained PAT**：勾 **Contents: Read and write**，且 Repository access 选中该仓库；配进 `~/.git-credentials`（先 `git config --global credential.helper store`，文件 `chmod 600`）。演示完 revoke。
+- **SSH deploy key**：服务器 `ssh-keygen` → 公钥加到仓库 Deploy keys（勾 Allow write）→ remote 用 `git@github.com:...`。
+
+缺凭据时 push 会报 `403` 或 `could not read Username`；此时巡检 + 修复 + 本地 commit + 报告仍算完成，报告标 `pushed: no`，配好凭据再补推即可。**凭据只在服务器本地配置，不要贴进飞书或聊天窗口。**
 
 ## 安全边界
 

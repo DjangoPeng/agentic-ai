@@ -40,7 +40,7 @@ sessions_spawn(runtime="acp", agentId="claude", mode="run", thread=false, cwd=<r
 sessions_send(sessionKey=<childSessionKey>, prompt=<显式带上 上一轮输出 + 当前 git diff + 验收缺失项 + 本轮目标>)
 ```
 
-**飞书交互演示**：`/acp doctor` → `/acp spawn claude --mode persistent --thread off --cwd <repo_path>` → `/acp steer --session <session-key> ...`。`/acp ...` 是聊天 slash command，**不能在 bash / SSH 里执行**。
+**飞书交互演示**：`/acp doctor` → `/acp spawn claude --mode persistent --thread on --cwd <repo_path>` → `/acp steer --session <session-key> ...`（一次性巡检用 `sessions_spawn(mode=run)`，persistent 会话是交互式演示用）。`/acp ...` 是聊天 slash command，**不能在 bash / SSH 里执行**。
 
 > 关键认知：`childSessionKey` 是**投递地址，不是记忆保证**。每轮 `sessions_send` 的 prompt 必须显式重新带上上一轮输出、当前 diff、验收缺失项——不要只写"继续修一下"。
 

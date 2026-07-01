@@ -75,6 +75,8 @@ https://github.com/DjangoPeng/agentic-ai.git
 > echo '/swapfile none swap sw 0 0' >> /etc/fstab   # 开机自动挂
 > free -h                                            # 确认 Swap 那行有 4G
 > ```
+>
+> 实测：加了 swap 后，**单次** `mode=run` 巡检全程 `Swap` 保持 `0B`（一个 Claude Code 会话 RAM 就装得下），4GB + swap 足以跑完一次审计；之前的 OOM 是**多会话堆叠**（自治流反复重试）造成的，不是单跑本身。
 
 ### 0.1 安装并接入 Claude Code
 
@@ -562,6 +564,14 @@ commit：<commit hash>
 下一步建议：
 - ...
 ```
+
+### 4GB / 弱模型上的巡检要点
+
+这三条是本课在 4GB 服务器 + 火山模型上实测踩出来的，决定巡检能否一次跑成：
+
+- **一次性巡检走 `mode=run`，不要用 `mode=persistent` + 手动 `steer`。** 官方文档明确：单个 audit/fix 任务的推荐做法就是 `sessions_spawn(runtime=acp, agentId=claude, mode=run)`（"best for isolated work items like audits or fixes"），跑完经后台 task-notification 回报。`mode=persistent` 是给交互式演进工作流的（且必须配 `--thread on`），拿它做一次性审计只会徒增会话绑定 / steer 语法的坑。
+- **prompt 要命令式、强制用工具。** 火山 `ark-code-latest` 这类模型面对一大段开放任务，容易"只输出计划就判定完成"。任务 prompt 要写成"现在立刻用 Read/Grep/Edit 动手做，不要只回计划"，并把步骤拆明确（找 → 读 → 改 → 复核 → diff）。
+- **push 需要写凭据。** OpenClaw 服务器要能写目标仓库：fine-grained PAT（勾 **Contents: Read and write** + Repository access 选中该仓库）或 SSH deploy key。缺凭据时 push 报 `403`，但巡检 + 修复 + 本地 commit + 报告照常完成，报告标 `pushed: no`，事后配好凭据再补推即可。凭据只在服务器本地配，别贴进飞书。
 
 ---
 

@@ -93,6 +93,8 @@ sessions_spawn({
 })
 ```
 
+> **任务 prompt 要命令式、强制用工具。** 遇到较弱或经中转的非 Claude 模型（如火山 `ark-code-latest`），一大段开放式任务容易被"只输出计划就判定完成"。prompt 要写成"现在立刻用 Read/Grep/Edit 动手做，不要只回计划"，并把步骤拆明确（找 → 读 → 改 → 复核 → diff）。
+
 `sessions_spawn` 成功后应返回：
 
 ```json
@@ -138,7 +140,7 @@ openclaw config set tools.agentToAgent.enabled true
 如果返回 `healthy: yes`，继续在同一个对话框中发送以下聊天消息，创建 Claude Code 会话：
 
 ```text
-/acp spawn claude --mode persistent --thread off --cwd /srv/openclaw-runner/repos/agentic-ai
+/acp spawn claude --mode persistent --thread on --cwd /srv/openclaw-runner/repos/agentic-ai
 ```
 
 返回示例：
@@ -190,7 +192,7 @@ OpenClaw 应把 session 信息保存到当前任务状态：
 - 如需后台多轮，`tools.sessions.visibility=all` 且 `tools.agentToAgent.enabled=true`。
 - `configuredBackend` 和 `registeredBackend` 均为 `acpx`。
 - `sessions_spawn` 能返回 `childSessionKey: agent:claude:acp:...`。
-- OpenClaw 运行用户具备目标 GitHub 仓库的 clone、commit 和 push 权限。
+- OpenClaw 运行用户具备目标 GitHub 仓库的 clone、commit 和 **push 权限**：服务器配了可写该仓库的凭据（fine-grained PAT 勾 Contents: Read and write，或 SSH deploy key）。缺凭据时 push 报 `403`，巡检 + 修复 + 本地 commit + 报告仍完成、报告标 `pushed: no`。
 - 目标仓库已获得用户授权。
 - 默认工作根目录为 `/srv/openclaw-runner`。
 
