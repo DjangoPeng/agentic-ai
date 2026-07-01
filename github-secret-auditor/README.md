@@ -11,7 +11,7 @@
 
 最终用户不需要手动拼接命令，也不需要逐步操作 Claude Code。用户只给出目标仓库，OpenClaw 读取本 Skill 后完成后续闭环。
 
-![github-secret-auditor 协作架构：用户经飞书提供 repo_url，OpenClaw 作为编排 Agent 经 ACP/ACPX 以 mode=run 调度同机执行 Agent Claude Code；Claude 只巡检修复与本地验证、不 commit/push，OpenClaw 验收后推送到 secret-audit-demo 分支并回传飞书报告，main 不受影响，全程运行在单台 4GB 服务器上](assets/diagrams/01-collaboration-architecture.svg)
+![github-secret-auditor 协作架构：夜间 Heartbeat/Cron 或飞书手动触发后，OpenClaw 依据 Skill 协议作为编排 Agent，经 ACP 调度通道与执行 Agent Claude Code 双向协作；Claude 进授权仓库巡检修复、只改不推（执行权），OpenClaw 验收后 commit/push 并发送巡检报告（发布权），全程受安全边界约束，本例为密钥巡检、同一范式可迁移](assets/diagrams/01-collaboration-architecture.svg)
 
 ## 与课程的关系
 

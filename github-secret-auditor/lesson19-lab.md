@@ -58,6 +58,10 @@ https://github.com/DjangoPeng/agentic-ai.git
 - Claude Code 不 push；push 只由 OpenClaw 验收后执行。
 - 报告只发飞书或写入 `/srv/openclaw-runner/reports`，不要提交进仓库。
 
+> 上面 02 是**理想时序**；下面这张是在 **4GB 服务器上实测跑通的全景**，把本节会踩的坑（`mode=run` 一次性、命令式 prompt、push 需 PAT、4G swap 防 OOM）提前标在图里——每个坑点在下文对应小节展开。
+
+![4GB 实测复现流程：OpenClaw 经 ACP/ACPX 以 mode=run 调度同机 Claude Code 巡检修复，验收后推送到 secret-audit-demo 分支并回传飞书报告；图中标注 mode=run、命令式 prompt、push 需 PAT、4G swap 防 OOM 等 4GB 复现要点](assets/diagrams/04-realworld-run.svg)
+
 ---
 
 ## 0. 服务器端准备：Claude Code 与 ACPX 后端

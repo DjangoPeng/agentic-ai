@@ -1,6 +1,6 @@
-<svg width="680" height="632" viewBox="0 0 680 632" role="img" xmlns="http://www.w3.org/2000/svg">
-<title>github-secret-auditor 协作架构图（ACP 实测流程）</title>
-<desc>用户经飞书提供 repo_url；OpenClaw 作为编排 Agent 通过 ACP/ACPX 以 mode=run 调度同一台主机上的执行 Agent Claude Code。Claude Code 在共享工作区巡检、最小修复、本地验证并回传 diff，但不 commit/push、不输出完整密钥；OpenClaw 验收通过后才 commit/push 到 secret-audit-demo 分支（需写凭据）并把脱敏报告回传飞书，main 分支不受影响。全流程运行在单台 4GB 服务器上，实测要点：mode=run 一次性、命令式 prompt、push 需 PAT、4G swap 防 OOM。</desc>
+<svg width="680" height="503" viewBox="0 0 680 503" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>github-secret-auditor 协作架构图（多 Agent · 夜间代码自愈范式）</title>
+<desc>第 19 节的多 Agent 协作范式：夜间 Heartbeat/Cron 定时或飞书手动触发后，OpenClaw 依据 Skill 协议作为编排/业务 Agent，通过 ACP 调度通道与执行 Agent Claude Code 双向协作。Claude Code 进入授权仓库巡检、最小修复、本地验证并返回 diff/证据（执行权：只改文件不推送）；OpenClaw 验收通过后 commit/push 并发送巡检报告（发布权）。全程受安全边界约束；本例为密钥巡检，同一范式可迁移到代码质量、依赖升级、配置治理、测试补全等工程任务。</desc>
 <style>
 text{font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Noto Sans CJK SC","Microsoft YaHei",sans-serif}
 .t{font-size:14px;font-weight:400;fill:#2C2C2A}
@@ -21,86 +21,87 @@ text{font-family:ui-sans-serif,system-ui,-apple-system,"PingFang SC","Hiragino S
 <path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
 </marker>
 </defs>
-<rect x="0" y="0" width="680" height="632" fill="#ffffff"/>
+<rect x="0" y="0" width="680" height="503" fill="#ffffff"/>
 
-<text class="th" x="340" y="28" text-anchor="middle">OpenClaw × Claude Code 密钥巡检自愈 · ACP 实测流程</text>
+<text class="th" x="340" y="28" text-anchor="middle">第 19 节 · 多 Agent 协作架构（夜间代码自愈范式）</text>
 
 <g class="c-gray">
-<rect x="255" y="44" width="170" height="46" rx="8"/>
-<text class="th" x="340" y="66" text-anchor="middle">飞书 · 用户</text>
-<text class="ts" x="340" y="83" text-anchor="middle">repo_url 入口 / 报告出口</text>
+<rect x="90" y="44" width="230" height="46" rx="8"/>
+<text class="th" x="205" y="66" text-anchor="middle">夜间触发 · Heartbeat / Cron</text>
+<text class="ts" x="205" y="83" text-anchor="middle">定时 · 无人值守唤醒</text>
 </g>
+<g class="c-gray">
+<rect x="360" y="44" width="230" height="46" rx="8"/>
+<text class="th" x="475" y="66" text-anchor="middle">飞书 · 用户</text>
+<text class="ts" x="475" y="83" text-anchor="middle">手动给出 repo_url</text>
+</g>
+<line x1="205" y1="90" x2="205" y2="100" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="475" y1="90" x2="475" y2="100" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
 
-<line x1="340" y1="92" x2="340" y2="116" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text class="ts" x="350" y="108" text-anchor="start">① repo_url + branch</text>
-
-<rect x="56" y="118" width="568" height="270" rx="12" class="box" style="stroke-dasharray:5 3"/>
-<text class="ts" x="70" y="137" text-anchor="start">单台服务器 · 4GB Ubuntu (+4G swap) · OpenClaw Gateway · ACP 同机</text>
+<rect x="56" y="100" width="568" height="30" rx="6" class="box" style="stroke-dasharray:5 3"/>
+<text class="ts" x="68" y="119" text-anchor="start">OpenClaw 读取 Skill 协议：SKILL.md / templates / references —— 智能在 Skill 契约 + Claude 循环里，不在脚本</text>
+<line x1="162" y1="130" x2="162" y2="148" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
 
 <g class="c-teal">
-<rect x="196" y="150" width="288" height="66" rx="8"/>
-<text class="th" x="340" y="173" text-anchor="middle">OpenClaw 编排 Agent（龙虾）</text>
-<text class="ts" x="340" y="191" text-anchor="middle">准备 · 验收 · commit/push</text>
-<text class="ts" x="340" y="207" text-anchor="middle">火山 /api/coding/v3 · OpenAI 协议</text>
+<rect x="56" y="150" width="212" height="88" rx="8"/>
+<text class="th" x="162" y="176" text-anchor="middle">编排 Agent · OpenClaw</text>
+<text class="ts" x="162" y="198" text-anchor="middle">理解目标 · 组织流程</text>
+<text class="ts" x="162" y="218" text-anchor="middle">验收 · commit / push</text>
 </g>
 
 <g class="c-coral">
-<rect x="270" y="232" width="140" height="54" rx="8"/>
-<text class="th" x="340" y="254" text-anchor="middle">ACP · ACPX 后端</text>
-<text class="ts" x="340" y="272" text-anchor="middle">本地子进程</text>
+<rect x="300" y="166" width="68" height="56" rx="8"/>
+<text class="th" x="334" y="189" text-anchor="middle">ACP</text>
+<text class="ts" x="334" y="207" text-anchor="middle">调度通道</text>
 </g>
-
-<line x1="248" y1="216" x2="248" y2="300" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
-<line x1="432" y1="300" x2="432" y2="216" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text class="ts" x="238" y="246" text-anchor="end">② sessions_spawn ▶</text>
-<text class="ts" x="238" y="262" text-anchor="end">mode=run · cwd · prompt</text>
-<text class="ts" x="238" y="278" text-anchor="end">⑤ 补漏 sessions_send</text>
-<text class="ts" x="442" y="250" text-anchor="start">④ diff · sessionKey ◀</text>
-<text class="ts" x="442" y="266" text-anchor="start">claude-code-acp 适配器</text>
 
 <g class="c-purple">
-<rect x="196" y="300" width="288" height="66" rx="8"/>
-<text class="th" x="340" y="323" text-anchor="middle">Claude Code 执行 Agent</text>
-<text class="ts" x="340" y="341" text-anchor="middle">巡检 · 最小修复 · 本地验证</text>
-<text class="ts" x="340" y="357" text-anchor="middle">不 commit/push · 不输出完整密钥</text>
+<rect x="400" y="150" width="224" height="88" rx="8"/>
+<text class="th" x="512" y="176" text-anchor="middle">执行 Agent · Claude Code</text>
+<text class="ts" x="512" y="198" text-anchor="middle">进入专业现场 · 完成动作</text>
+<text class="ts" x="512" y="218" text-anchor="middle">本地验证 · 返回 diff / 证据</text>
 </g>
 
-<line x1="210" y1="388" x2="192" y2="416" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text class="ts" x="150" y="404" text-anchor="end">③ Claude 改文件</text>
-<line x1="300" y1="388" x2="300" y2="416" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text class="ts" x="312" y="404" text-anchor="start">⑥ 验收后 push(PAT)</text>
-<line x1="452" y1="388" x2="486" y2="416" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
-<text class="ts" x="502" y="404" text-anchor="start">⑦ 出飞书报告</text>
+<line x1="268" y1="192" x2="298" y2="192" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="368" y1="192" x2="398" y2="192" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="398" y1="210" x2="368" y2="210" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<line x1="298" y1="210" x2="268" y2="210" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="283" y="186" text-anchor="middle">调度</text>
+<text class="ts" x="383" y="226" text-anchor="middle">返回</text>
+
+<line x1="120" y1="238" x2="120" y2="289" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="126" y="266" text-anchor="start">验收后发送报告</text>
+<path d="M232 238 L232 266 L470 266 L470 289" fill="none" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="351" y="258" text-anchor="middle">发布权 · 验收后 push</text>
+<line x1="540" y1="238" x2="540" y2="289" stroke="#9b9a92" stroke-width="1.4" marker-end="url(#arrow)"/>
+<text class="ts" x="548" y="262" text-anchor="start">执行权 · 只改</text>
 
 <g class="c-gray">
-<rect x="66" y="418" width="298" height="66" rx="8"/>
-<text class="th" x="215" y="440" text-anchor="middle">目标 GitHub 仓库</text>
-<text class="ts" x="215" y="458" text-anchor="middle">@ secret-audit-demo · 共享工作区</text>
-<text class="ts" x="215" y="474" text-anchor="middle">Claude 改 · OpenClaw 推 · main 不碰</text>
+<rect x="56" y="290" width="212" height="64" rx="8"/>
+<text class="th" x="162" y="313" text-anchor="middle">巡检报告</text>
+<text class="ts" x="162" y="333" text-anchor="middle">状态 · commit · 风险摘要</text>
+<text class="ts" x="162" y="349" text-anchor="middle">报告不入库（飞书 / 存档）</text>
 </g>
-
 <g class="c-gray">
-<rect x="384" y="418" width="234" height="66" rx="8"/>
-<text class="th" x="501" y="440" text-anchor="middle">飞书巡检报告</text>
-<text class="ts" x="501" y="458" text-anchor="middle">状态 · commit · 风险摘要</text>
-<text class="ts" x="501" y="474" text-anchor="middle">脱敏 · 不入库 · 回传用户</text>
+<rect x="412" y="290" width="212" height="64" rx="8"/>
+<text class="th" x="518" y="313" text-anchor="middle">目标 GitHub 仓库</text>
+<text class="ts" x="518" y="333" text-anchor="middle">共享工作区</text>
+<text class="ts" x="518" y="349" text-anchor="middle">Claude 改 · OpenClaw 推</text>
 </g>
 
-<rect x="56" y="496" width="568" height="32" rx="6" class="box" style="stroke-dasharray:5 3"/>
-<text class="ts" x="68" y="513" text-anchor="start">安全边界 · 仅授权仓库 · 不读密钥/私钥/生产配置 · 不输出完整密钥 · 报告不入库</text>
+<rect x="56" y="368" width="568" height="32" rx="6" class="box" style="stroke-dasharray:5 3"/>
+<text class="ts" x="68" y="387" text-anchor="start">安全边界 · 仅授权仓库 · 不读密钥/私钥/生产配置 · 不输出完整密钥 · 报告不入库</text>
 
-<text class="ts" x="56" y="546" text-anchor="start">实测要点（4GB 复现）:</text>
-<g class="c-gray"><rect x="56" y="554" width="140" height="30" rx="8"/><text class="ts" x="126" y="573" text-anchor="middle">mode=run 一次性</text></g>
-<g class="c-gray"><rect x="206" y="554" width="140" height="30" rx="8"/><text class="ts" x="276" y="573" text-anchor="middle">命令式 prompt</text></g>
-<g class="c-gray"><rect x="356" y="554" width="140" height="30" rx="8"/><text class="ts" x="426" y="573" text-anchor="middle">push 需 PAT(RW)</text></g>
-<g class="c-gray"><rect x="506" y="554" width="140" height="30" rx="8"/><text class="ts" x="576" y="573" text-anchor="middle">4G swap 防 OOM</text></g>
+<rect x="56" y="412" width="568" height="46" rx="6" class="box" style="stroke-dasharray:5 3"/>
+<text class="th" x="68" y="431" text-anchor="start">可迁移范式（本例 = 密钥巡检）</text>
+<text class="ts" x="68" y="449" text-anchor="start">业务 Agent 理解目标 + 验收 · 执行 Agent 进现场 + 返证据 → 代码质量 / 依赖升级 / 配置治理 / 测试补全</text>
 
-<rect x="56" y="598" width="13" height="13" rx="3" class="c-teal"/>
-<text class="ts" x="74" y="609" text-anchor="start">编排 · OpenClaw</text>
-<rect x="210" y="598" width="13" height="13" rx="3" class="c-coral"/>
-<text class="ts" x="228" y="609" text-anchor="start">ACP · ACPX 通道</text>
-<rect x="380" y="598" width="13" height="13" rx="3" class="c-purple"/>
-<text class="ts" x="398" y="609" text-anchor="start">执行 · Claude Code</text>
-<rect x="560" y="598" width="13" height="13" rx="3" class="c-gray"/>
-<text class="ts" x="578" y="609" text-anchor="start">输入 / 产物</text>
+<rect x="56" y="472" width="13" height="13" rx="3" class="c-teal"/>
+<text class="ts" x="74" y="483" text-anchor="start">编排 · OpenClaw</text>
+<rect x="210" y="472" width="13" height="13" rx="3" class="c-coral"/>
+<text class="ts" x="228" y="483" text-anchor="start">ACP 调度通道</text>
+<rect x="370" y="472" width="13" height="13" rx="3" class="c-purple"/>
+<text class="ts" x="388" y="483" text-anchor="start">执行 · Claude Code</text>
+<rect x="548" y="472" width="13" height="13" rx="3" class="c-gray"/>
+<text class="ts" x="566" y="483" text-anchor="start">触发 / 产物</text>
 </svg>
