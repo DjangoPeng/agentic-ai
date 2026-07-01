@@ -6,7 +6,7 @@
 
 ## 这个仓库是什么
 
-一套经过生产验证的 OpenClaw + Claude Code 实战资料，包含部署脚本、IM 接入指南、模型配置模板、安全加固清单和排错手册。
+《AI 业务流架构师》配套仓库：OpenClaw 生产部署 + Claude Code 深度实战 + 一系列可落地的 AI Agent 业务流项目（小红书发布 / 财务票据 / 智能早报 / CRM / 量化投研 / 密钥巡检自愈）。
 
 无论你是：
 
@@ -37,6 +37,9 @@
 | 全自动财务填报与票据识别 Agent | [financial-automation/](financial-automation) |
 | 多平台智能早报管家（信号分诊 + 三关口编辑） | [morning-newspaper/](morning-newspaper) |
 | CRM 会议资产沉淀（四段式架构 + 历史强值保护） | [CRM-Assistant/](CRM-Assistant) |
+| 在终端用 Claude Code 做多文件协同与代码级重构 | [claude-code/](claude-code) |
+| 从零构建 AI 量化投研系统（年报解析 → 研判 → 出图 → HTML 报告） | [ai-quant-cli/](ai-quant-cli) |
+| 让 OpenClaw 经 ACP 调度 Claude Code 巡检 GitHub 密钥泄露 | [github-secret-auditor/](github-secret-auditor) |
 
 ## 目录结构
 
@@ -95,7 +98,7 @@
 │
 ├── ai-quant-cli/                     # 第18节：从空目录造 AI 量化投研系统（解析 → 研判 → 出图 → HTML 报告）
 ├── github-secret-auditor/            # 第19节：OpenClaw 经 ACP 调度 Claude Code 巡检 GitHub 密钥泄露（夜间代码自愈）
-├── claude-code/                      # Claude Code CLI 深度实战（即将更新）
+├── claude-code/                      # 第16-17节：Claude Code 深度实战（多文件协同 + 终端级重构）
 ├── xhs-auto-publisher/               # 第12节：云端小红书图文自动发布 Agent（Playwright + 龙虾通知）
 ├── financial-automation/             # 第13节：全自动财务填报与票据识别 Agent（OCR + 飞书 Bitable）
 ├── morning-newspaper/               # 第14节：多平台智能早报管家（信号分诊 + 三关口 LLM 编辑 + 飞书推送）
