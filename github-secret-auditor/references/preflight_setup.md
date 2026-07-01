@@ -19,12 +19,19 @@
 
 OpenClaw 通过 ACPX 后端经 ACP 调度 Claude Code。ACPX 随 OpenClaw 一起分发（打包在 `dist/extensions/acpx`），但需显式安装启用；否则 `/acp doctor` 报 backend 不健康、`sessions_spawn` 找不到 acp runtime。
 
+acpx 随 OpenClaw 自带、通常已在 `allow` 且 `enabled: true`，但**有两个坑会让它"装上却用不了"**（`/acp doctor` 报 `registeredBackend: (none)`）：
+
+- **`openclaw plugins install acpx` 可能被安全扫描拦下**（检测到 `child_process`——ACP 本就要拉子进程）。不用管：acpx 自带且已在 `allow`，网关启动直接加载，不必走 CLI。
+- **自带扩展漏装运行时依赖 `acpx@0.5.3`** → 启动报 `Cannot find module 'acpx/runtime'` → 后端不注册。手动补依赖后重启：
+
 ```bash
-openclaw config get plugins              # 看 entries 是否已有 acpx
-openclaw plugins install acpx            # 没有则安装（从自带扩展解析，无需联网下载）
+cd /usr/lib/node_modules/openclaw/dist/extensions/acpx
+npm install --registry=https://registry.npmmirror.com    # 国内镜像；能直连官方源就去掉 --registry
 openclaw config get plugins              # 确认 acpx 在 allow，且 entries.acpx.enabled: true
 systemctl restart openclaw               # 重启 gateway 生效
 ```
+
+> 验证只看 `/acp doctor` 的 `registeredBackend: acpx`；`acpx --help` 不存在（进程内插件）。`configuredBackend: acpx` 但 `registeredBackend: (none)` = 没加载，多半缺依赖或没重启。
 
 安装后 `entries.acpx` 形如：
 
